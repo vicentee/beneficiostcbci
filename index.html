@@ -146,12 +146,17 @@ footer{margin-top:36px;font-size:.74rem;color:var(--faint);line-height:1.6}
 footer a{color:var(--muted)}
 
 /* Asistente */
-.wrap{padding-bottom:88px}
-.chat-btn{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;display:flex;align-items:center;gap:8px;background:var(--ink);color:var(--bg);border:0;border-radius:3px;padding:11px 14px;font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:0 6px 20px color-mix(in srgb,var(--ink) 25%,transparent)}
-.chat-btn i{width:8px;height:8px;border-radius:50%;background:var(--accent);display:block}
+.wrap{padding-bottom:96px}
+.chat-btn{position:fixed;right:16px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:20;width:54px;height:54px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-family:var(--mono);font-size:1.45rem;font-weight:500;line-height:1;display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 24px color-mix(in srgb,var(--accent) 45%,transparent)}
+.chat-btn:active{transform:scale(.96)}
 .chat-btn[aria-expanded="true"]{display:none}
 .chat-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.chat{position:fixed;left:0;right:0;bottom:0;z-index:30;max-width:560px;margin:0 auto;height:min(78vh,620px);background:var(--bg);border-top:2px solid var(--ink);display:flex;flex-direction:column;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 30px color-mix(in srgb,var(--ink) 18%,transparent)}
+.chat{position:fixed;top:0;right:0;bottom:0;z-index:30;width:min(420px,88vw);background:var(--bg);border-left:2px solid var(--accent);display:flex;flex-direction:column;padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(12px + env(safe-area-inset-bottom,0px));box-shadow:-12px 0 32px color-mix(in srgb,var(--ink) 18%,transparent)}
+.chat-scrim{position:fixed;inset:0;z-index:25;background:color-mix(in srgb,var(--ink) 28%,transparent)}
+.chat-scrim[hidden]{display:none}
+@media (prefers-reduced-motion:no-preference){.chat:not([hidden]){animation:chatIn .24s cubic-bezier(.2,.7,.2,1)}.chat-scrim:not([hidden]){animation:fadeIn .2s ease-out}}
+@keyframes chatIn{from{transform:translateX(100%)}to{transform:none}}
+@keyframes fadeIn{from{opacity:0}}
 .chat[hidden]{display:none}
 .chat header{display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--line)}
 .chat header button{border:0;background:none;font-size:1.4rem;line-height:1;color:var(--muted);cursor:pointer;padding:2px 6px}
@@ -202,7 +207,8 @@ footer a{color:var(--muted)}
     <br><a href="https://www.bci.cl/beneficios/beneficios-bci" target="_blank" rel="noopener">Beneficios en bci.cl</a>
   </footer>
 </div>
-<button type="button" class="chat-btn" id="chatBtn" aria-expanded="false" aria-controls="chat"><i aria-hidden="true"></i>Preguntar</button>
+<button type="button" class="chat-btn" id="chatBtn" aria-expanded="false" aria-controls="chat" aria-label="Preguntar">?</button>
+<div class="chat-scrim" id="chatScrim" hidden></div>
 <section class="chat" id="chat" hidden aria-label="Asistente de beneficios">
   <header><span class="label">Pregúntale a tus tarjetas</span><button type="button" id="chatX" aria-label="Cerrar">×</button></header>
   <div class="chat-log" id="chatLog" aria-live="polite"></div>
@@ -828,9 +834,11 @@ const CHAT=[];
 function chatAdd(role,html){CHAT.push({role,html});const box=$('chatLog');const m=document.createElement('div');m.className='msg '+role;m.innerHTML=html;box.appendChild(m);box.scrollTop=box.scrollHeight;
   m.querySelectorAll('.pick').forEach(b=>b.onclick=()=>{const wd=b.dataset.wd;if(wd)state.wd=+wd;const c=b.dataset.cat;state.cat=c===F||c===R?'Todo':c;render();toggleChat(false);window.scrollTo({top:$('best').offsetTop-80,behavior:'smooth'})});}
 function ask(q){q=q.trim();if(!q)return;chatAdd('me',q.replace(/[<>&]/g,s=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[s])));chatAdd('bot',answer(q).html);$('chatIn').value='';}
-function toggleChat(open){$('chat').hidden=!open;$('chatBtn').setAttribute('aria-expanded',open);if(open){if(!CHAT.length)chatAdd('bot','Pregúntame por un rubro, un comercio o un día. Respondo con tus tarjetas encendidas y tu zona.');setTimeout(()=>$('chatIn').focus(),50)}}
+function toggleChat(open){$('chat').hidden=!open;$('chatScrim').hidden=!open;document.body.style.overflow=open?'hidden':'';$('chatBtn').setAttribute('aria-expanded',open);if(open){if(!CHAT.length)chatAdd('bot','Pregúntame por un rubro, un comercio o un día. Respondo con tus tarjetas encendidas y tu zona.');setTimeout(()=>$('chatIn').focus(),50)}}
 $('chatBtn').onclick=()=>toggleChat($('chat').hidden);
 $('chatX').onclick=()=>toggleChat(false);
+$('chatScrim').onclick=()=>toggleChat(false);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('chat').hidden)toggleChat(false)});
 $('chatForm').addEventListener('submit',e=>{e.preventDefault();ask($('chatIn').value)});
 document.querySelectorAll('#chatSug button').forEach(b=>b.onclick=()=>ask(b.textContent));
 
