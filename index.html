@@ -38,13 +38,14 @@ button{font:inherit;color:inherit}
 
 /* Encabezado */
 .top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
-.top h1{font-size:1.05rem;font-weight:600;margin:0;letter-spacing:-.01em}
+.top h1{font-size:1.05rem;font-weight:600;margin:0;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.top #clock{flex:none}
 
 /* Días */
 /* Franja fija bajo la barra de estado del celular: tapa lo que pasa por detrás al hacer scroll */
 .days::after{content:"";position:absolute;left:0;right:0;top:100%;height:16px;background:linear-gradient(var(--bg),color-mix(in srgb,var(--bg) 0%,transparent));pointer-events:none}
 body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:15;pointer-events:none}
-.days{position:sticky;top:env(safe-area-inset-top,0px);z-index:14;box-shadow:0 -12px 0 var(--bg);background:var(--bg);display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding-block:12px 10px;border-bottom:1px solid var(--line)}
+.days{position:sticky;top:env(safe-area-inset-top,0px);z-index:14;background:var(--bg);display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding-block:12px 10px;border-bottom:1px solid var(--line)}
 .day{border:0;background:none;border-radius:2px;padding:4px 0 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
 .day b{font-family:var(--mono);font-size:.62rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .day .dt{font-family:var(--mono);font-size:1rem;font-variant-numeric:tabular-nums}
@@ -317,7 +318,7 @@ const DATA=[
 ['Juan Valdez',F,'40%',[3],'C','Sin tope','Presencial','Bebidas preparadas en barra'],
 ["Wendy's",F,'30%',[3],'CDL','Sin tope','Presencial','Combo Baconator Doble'],
 ['Chinawok',F,'30%',[3],'CD','Sin tope','Presencial','Combo Wok 1 Pollo Teriyaki'],
-['Blackdrop Coffee',F,'20%',[0],'CD','Sin tope',''],
+['Blackdrop Coffee',F,'20%',[0],'CD','Sin tope','Online o presencial'],
 // Súper y delivery
 ['Unimarc · Alvi · Mayorista 10',S,'10%',[0],'D','$10.000','Presencial','Cashback pagando con débito o QR App Bci. Primera compra del mes'],
 ['PedidosYa Market',S,'30%',[0],'C','$8.000','Online','2 usos al mes'],
@@ -667,8 +668,10 @@ function payWith(k){
   return 'Paga con '+txt;
 }
 function hoursHtml(n,wd){const h=hoursInfo(n,wd);return h?(h.warn?`<span class="caveat">${h.t}</span>`:h.t):''}
+// Beneficios de nicho: siguen en la lista, pero no encabezan "Lo mejor".
+const NICHE=new Set(['Cpech','Filadd','Padre Mariano','Clínica Everest','Clínica Norden','Kidzania','Smart Fit','RedSalud','Otros comercios','Lider en 3 cuotas']);
 function renderBest(wd,dn){
-  const pool=DATA.filter(it=>applies(it,wd,dn)&&!isLow(it)&&it[2].includes('%'));
+  const pool=DATA.filter(it=>applies(it,wd,dn)&&!isLow(it)&&it[2].includes('%')&&!NICHE.has(it[0]));
   pool.sort((a,b)=>{const sa=a[3].includes(0)?1:0,sb=b[3].includes(0)?1:0; return sa-sb||num(b[2])-num(a[2])||(b[1]===R)-(a[1]===R)});
   const seen=new Set(), picks=[], daily=[];
   for(const it of pool){
@@ -705,7 +708,7 @@ function li(it,compact){
   const btn=lk&&lk.activar?`<div class="acts">${lk.html}</div>`:'';
   return `<li class="${[btn?'has-btn':'',lk&&!lk.activar?'tap':''].join(' ').trim()}"><div class="pct${hi?' hi':''}${p.length>5?' long':''}">${p.endsWith('%')?wedge(p,hi):''}${p}${cash?`<small>cashback</small>`:''}${sv?(sv.max?`<small>hasta ${sv.max}</small><small class="bill">con ${sv.bill}</small>`:`<small>${sv}</small>`):''}</div><div class="info"><div class="name">${nameHtml(n,lk)}</div><div class="meta">${line1}</div>${line2?`<div class="meta">${line2}</div>`:''}${hrs?`<div class="meta">${hrs}</div>`:''}${noteHtml?`<div class="meta">${noteHtml}</div>`:''}</div>${btn}</li>`;
 }
-function tick(){const d=new Date();$('clock').textContent=d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit',hour12:false})+' · Santiago'}
+function tick(){const d=new Date();$('clock').textContent=d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit',hour12:false})}
 tick();setInterval(()=>{tick();if(state.wd===todayWd)render()},60000);
 function renderCards(){
   $('cards').innerHTML='';
@@ -728,7 +731,7 @@ $('srcHol').textContent=MONTH.holidays.length?' ('+MONTH.holidays.join(' y ')+')
 render();
 
 // Auto-actualización de la app instalada (solo en vicentee.github.io): si hay una versión nueva publicada, recarga.
-const BUILD='20261009102252';
+const BUILD='20261009102716';
 function checkUpdate(){
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(h=>{
