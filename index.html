@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bci">
+<meta name="theme-color" content="#f6f6f4">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Descuentos Bci</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column, instrument-like. Hairlines instead of cards, mono for numbers and labels, one accent reserved for 40%+ */
+:root{
+  --bg:#f6f6f4; --surface:#ffffff; --ink:#121212; --muted:#6c6c67; --faint:#9a9a94; --line:#e4e4e0;
+  --accent:#2a3cff; --bar:#c9c9c4; --hl:#ffe14d;
+  --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e0e0e; --surface:#161616; --ink:#ececea; --muted:#9a9a95; --faint:#6a6a66; --line:#262626;
+  --accent:#7d8bff; --bar:#3a3a38; --hl:#6b5a00; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e0e0e; --surface:#161616; --ink:#ececea; --muted:#9a9a95; --faint:#6a6a66; --line:#262626;
+  --accent:#7d8bff; --bar:#3a3a38; --hl:#6b5a00; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45;margin:0;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:16px 48px}
+.label{font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+
+/* Encabezado */
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.top h1{font-size:1.05rem;font-weight:600;margin:0;letter-spacing:-.01em}
+
+/* Días */
+.days{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding-block:12px 10px;border-bottom:1px solid var(--line)}
+.day{border:0;background:none;border-radius:2px;padding:4px 0 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+.day b{font-family:var(--mono);font-size:.62rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.day .dt{font-family:var(--mono);font-size:1rem;font-variant-numeric:tabular-nums}
+.day .col{display:flex;align-items:flex-end;justify-content:center;width:100%;height:24px;margin-bottom:6px;background:linear-gradient(var(--bar),var(--bar)) bottom/100% 1px no-repeat}
+.day .col i{display:block;width:6px;background:var(--accent);min-height:1px}
+.day[aria-pressed="true"] .col{background:linear-gradient(var(--bg),var(--bg)) bottom/100% 1px no-repeat}
+.day[aria-pressed="true"] .col i{background:var(--bg)}
+.day.today b{color:var(--accent)}
+.day[aria-pressed="true"]{background:var(--ink)}
+.day[aria-pressed="true"] b,.day[aria-pressed="true"] .dt{color:var(--bg)}
+
+/* Resumen del día */
+.sum{margin:22px 0 14px}
+.sum h2{font-size:2.6rem;font-weight:600;letter-spacing:-.045em;margin:0 0 6px;line-height:1}
+.sum h2 em{font-style:normal;font-family:var(--mono);font-weight:400;letter-spacing:-.06em;color:var(--accent)}
+.lede{font-size:.95rem;line-height:1.4;margin:10px 0 0;max-width:34ch;text-wrap:pretty}
+.lede b{font-weight:600}
+.note{display:inline;background:var(--hl);color:var(--ink);padding:1px 4px;font-size:.82rem}
+#notes{margin:-4px 0 14px}
+#notes:empty{display:none}
+
+/* Controles */
+.ctrl{display:flex;gap:8px;align-items:stretch}
+.where{flex:1;display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:3px;padding:2px;gap:2px;background:var(--surface)}
+.where button,.tog{border:0;background:none;font-family:var(--mono);font-size:.7rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:7px 2px;border-radius:2px;cursor:pointer}
+.where button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.tog{border:1px solid var(--line);background:var(--surface);padding:7px 10px;border-radius:3px}
+.tog[aria-pressed="true"]{border-color:var(--ink);color:var(--ink)}
+.chips{display:flex;gap:16px;overflow-x:auto;padding-block:14px 2px;scrollbar-width:none;border-bottom:1px solid var(--line)}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:0;background:none;padding:0 0 10px;font-size:.86rem;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.chip[aria-pressed="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--ink)}
+.day:focus-visible,.chip:focus-visible,.tog:focus-visible,.where button:focus-visible,.ver:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Sugerido */
+.best{margin-top:22px;border-top:2px solid var(--ink);padding-top:10px}
+.best:empty{display:none}
+.best .row{display:grid;grid-template-columns:28px 68px 1fr auto;gap:10px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.glyph{width:28px;height:28px;display:block}
+.glyph .base{fill:none;stroke:var(--bar);stroke-width:1}
+.glyph .w{fill:var(--ink)}
+.glyph.hi .w{fill:var(--accent)}
+.best .row .pct{font-size:1.9rem;letter-spacing:-.06em;line-height:1}
+.best .label+.row,.best .label+.daily{border-top:0}
+.best .label{display:block;margin-bottom:2px}
+.best .daily{margin:0;padding:10px 0;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted)}
+.best .daily b{font-family:var(--mono);font-weight:500;color:var(--ink)}
+
+/* Lista */
+.group{margin-top:26px}
+.group h3{display:flex;justify-content:space-between;margin:0 0 4px}
+ul{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+li{display:grid;grid-template-columns:92px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:start}
+li.has-btn{grid-template-columns:92px 1fr auto;align-items:center}
+li,.best .row{position:relative}
+.nm{color:inherit;text-decoration:none}
+.nm::after{content:"";position:absolute;inset:0}
+.nm:focus-visible{outline:none}
+.tap:has(.nm:focus-visible){outline:2px solid var(--accent);outline-offset:-2px}
+.tap:active{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.arr{font-family:var(--mono);font-size:.78em;color:var(--muted);margin-left:5px}
+.tap .acts,.tap .ver{position:relative;z-index:1}
+.pct .glyph{width:14px;height:14px;display:inline-block;vertical-align:-1px;margin-right:6px}
+.pct{white-space:nowrap;font-family:var(--mono);font-size:1.05rem;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.25;letter-spacing:-.02em}
+.pct.hi{color:var(--accent)}
+.pct.long{font-size:.74rem;letter-spacing:0;white-space:normal}
+.pct.long .glyph{display:none}
+.pct.long small{margin-left:0}
+.caveat{background:var(--hl);color:var(--ink);padding:0 3px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.bar{display:block;height:2px;margin-top:6px;width:44px;background:repeating-linear-gradient(90deg,var(--bar) 0 2px,transparent 2px 4px)}
+.bar i{display:block;height:2px;background:var(--ink)}
+.pct.hi .bar i{background:var(--accent)}
+.pct small.bill{margin-top:0;color:var(--faint)}
+.pct small{display:block;margin-left:20px;margin-top:3px;font-size:.62rem;letter-spacing:-.01em;text-transform:none;color:var(--muted);font-weight:400;white-space:nowrap}
+.info{min-width:0}
+.name{font-weight:500}
+.meta{font-size:.78rem;color:var(--muted);margin-top:2px}
+.meta+.meta{color:var(--faint)}
+.acts{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.ver{display:inline-block;min-width:76px;text-align:center;box-sizing:border-box;text-decoration:none;font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);border:1px solid var(--ink);border-radius:2px;padding:7px 10px;white-space:nowrap;line-height:1}
+.ver:active{background:var(--ink);color:var(--bg)}
+
+/* Secciones plegadas */
+.others{margin-top:22px}
+.others summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.others summary::-webkit-details-marker{display:none}
+.others summary::after{content:"+";font-family:var(--mono);color:var(--muted)}
+.others[open] summary::after{content:"−"}
+.others[open] summary{border-bottom:0}
+.others summary span.cnt{font-family:var(--mono);color:var(--faint);margin-left:6px}
+li.mini{grid-template-columns:92px 1fr;padding:8px 0;font-size:.84rem}
+li.mini .pct{font-size:.84rem;color:var(--muted)}
+li.mini .name{font-weight:400}
+.meta-inline{color:var(--faint);font-size:.76rem}
+.empty{padding:28px 0;color:var(--muted);font-size:.88rem}
+footer{margin-top:36px;font-size:.74rem;color:var(--faint);line-height:1.6}
+footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <h1 id="appTitle">Descuentos Bci</h1>
+    <span class="label" id="clock">Visa Gold + débito</span>
+  </header>
+  <nav class="days" id="days" aria-label="Día de la semana"></nav>
+  <section class="sum">
+    <h2 id="dayTitle"></h2>
+    <span class="label" id="count"></span>
+    <p class="lede" id="lede"></p>
+  </section>
+  <div id="notes"></div>
+  <div class="ctrl">
+    <div class="where" id="where" role="group" aria-label="Dónde estás"></div>
+    <button class="tog" id="tDeb" aria-pressed="false" type="button" title="Mostrar solo lo que acepta débito">Débito</button>
+  </div>
+  <div class="chips" id="chips" role="toolbar" aria-label="Categoría"></div>
+  <section class="best" id="best" aria-label="Sugerencias del día"></section>
+  <div id="list"></div>
+  <footer>
+    Fuente: catálogo oficial de beneficios Bci, <span id="srcMonth"></span>. Excluye lo exclusivo de Platinum, Signature, Infinite y Black. Descuentos no acumulables. Cashback online: entra al comercio desde BciPlus+. Confirma en la App Bci antes de ir, sobre todo en feriados<span id="srcHol"></span>.
+    <br><a href="https://www.bci.cl/beneficios/beneficios-bci" target="_blank" rel="noopener">Beneficios en bci.cl</a>
+  </footer>
+</div>
+
+<script>
+// d: 1=lun ... 7=dom, 0 = todos los días. k: C=solo crédito, CD=crédito o débito, D=solo débito
+const R='Restaurantes',F='Café y comida rápida',S='Súper y delivery',B='Bencina',H='Salud y bienestar',M='Compras',P='Panoramas',V='Viajes';
+const DATA=[
+// Restaurantes RM, un día
+['Danés Bar & Restaurant',R,'40%',[1],'C','$40.000','Las Condes'],
+['La Fabbrica',R,'40%',[1],'C','$40.000','La Reina · Lo Barnechea'],
+['The Courtner',R,'40%',[1],'C','$40.000','Las Condes'],
+['Tigre Bravo',R,'40%',[1],'C','$40.000','Maipú'],
+['Lumière Bistró',R,'20%',[1],'CD','$40.000','Las Condes'],
+['Barra de Pickles',R,'40%',[2],'C','$40.000','Ñuñoa'],
+['Kleine Kneipe',R,'40%',[2],'C','$40.000','Ñuñoa'],
+['La Casa Vieja',R,'40%',[2],'C','$40.000','Vitacura'],
+['Lin Lan',R,'40%',[2],'C','$40.000','Las Condes'],
+['Momiji Ramen',R,'30%',[2],'C','$30.000','Recoleta'],
+['Calle y Barrio',R,'40%',[2],'CD','$40.000','Providencia'],
+['Inari Sushi',R,'20%',[2],'CD','$20.000','San Miguel'],
+['PastaMore',R,'20%',[2],'CD','$20.000','Vitacura'],
+['Santa Hamburguesa',R,'20%',[2],'CD','$20.000','Providencia'],
+['Bar Italia',R,'40%',[3],'C','$40.000','Providencia'],
+['Danubio Azul',R,'40%',[3],'C','$40.000','Las Condes'],
+['Diksabaa Shawarmas',R,'40%',[3],'C','$40.000','Peñalolén'],
+['La Chimba',R,'40%',[3],'C','$40.000','Providencia'],
+['Lao Lao Foods',R,'40%',[3],'C','$40.000','Providencia'],
+['Los Vikingos',R,'40%',[3],'C','$40.000','Santiago Centro'],
+["Ocean Pacific's",R,'40%',[3],'C','$40.000','Santiago'],
+['Raffaella',R,'40%',[3],'C','$40.000','Las Condes'],
+['Misky Mikuy',R,'40%',[3],'C','$40.000','La Reina'],
+['Tres Valles',R,'40%',[3],'C','$40.000','Santiago'],
+['Casa Vitalis',R,'20%',[3],'CD','$20.000','Vitacura'],
+['AC Kitchen',R,'40%',[4],'C','$100.000','Providencia'],
+['Caoba Bar',R,'40%',[4],'C','$40.000','Vitacura'],
+['Entre Cavas y Ladrillos',R,'40%',[4],'C','$40.000','San Miguel'],
+['Guachita Culebra',R,'40%',[4],'C','$40.000','Providencia'],
+['Restobar Bravos',R,'40%',[4],'C','$40.000','Peñalolén'],
+['Tera Restoran',R,'40%',[4],'C','$40.000','Providencia'],
+['Hijo del Inca',R,'40%',[4],'CD','$40.000','La Reina · Providencia'],
+['La Vermutería del Pobre',R,'20%',[4],'CD','Sin tope','Providencia · Las Condes'],
+['Vermut',R,'20%',[4],'CD','Sin tope','Providencia'],
+['Siete Negronis',R,'20%',[4],'CD','Sin tope','Vitacura'],
+['OIA',R,'40%',[5],'C','$40.000','Vitacura'],
+['Anima Cocktail Lab',R,'40%',[5],'C','$40.000','Providencia (Bellavista)'],
+['Gueros',R,'40%',[5],'C','$40.000','Providencia (Bellavista)'],
+['Hitomi',R,'40%',[5],'C','$40.000','Providencia'],
+['Kechua',R,'40%',[5],'C','$40.000','Providencia (Bellavista)'],
+['Omar Khayyam',R,'40%',[5],'C','$40.000','Recoleta'],
+['The Greens',R,'40%',[5],'C','$40.000','Las Condes'],
+['Wayna',R,'40%',[5],'C','$40.000','La Florida','También 20% con débito, sin tope'],
+['Al Pesto',R,'40%',[6],'C','$40.000','Chicureo'],
+['El Club del Ramen',R,'40%',[6],'C','$40.000','Huechuraba'],
+['Oporto',R,'40%',[6],'C','$40.000','Las Condes'],
+['Rugendas',R,'40%',[6],'C','$40.000','Las Condes'],
+['Soho Thai',R,'40%',[6],'C','$40.000','Las Condes'],
+['The Bistró',R,'40%',[6],'C','$40.000','Las Condes'],
+['Kanpai',R,'40%',[2],'C','$40.000','Pichilemu'],
+['Vino Bello',R,'40%',[2],'C','$40.000','Santa Cruz'],
+['Bocas del Mar',R,'40%',[5],'C','$40.000','Pichilemu'],
+['Guayaquil Fusión',R,'20%',[7],'CD','$40.000','Las Condes'],
+['Bar La Trova',R,'20%',[0],'CD','$20.000','Santiago'],
+['Cava & Barrica',R,'20%',[0],'CD','$20.000','Santiago'],
+['El Café Rosa',R,'20%',[0],'CD','$20.000','Vitacura · Peñalolén · Colina · Providencia'],
+['Roof Burger',R,'20%',[0],'CD','$20.000','Vitacura · Peñalolén · Chicureo'],
+// Restaurantes RM, varios días
+['De Barrio',R,'40%',[1,2,3,4],'CD','$40.000','Barrio Italia'],
+['La Santoría',R,'40%',[1,2,7],'CD','$40.000','Providencia'],
+['Impasto Restobar',R,'40%',[3,5],'CD','$40.000','Providencia'],
+['Bar Porfirio',R,'25%',[2,3,4,5,6],'CD','$50.000','Providencia'],
+['Expendio',R,'25%',[2,3,4,5,6],'CD','$50.000','Providencia'],
+['Zía Bistró & Café',R,'20%',[1,2,3],'CD','$20.000','Lo Barnechea'],
+['Sabor y Aroma',R,'20%',[1,2,3,4,5],'CD','$20.000','Lo Barnechea'],
+['China 365',R,'20%',[1,3,4,5],'CD','Sin tope','Lo Barnechea'],
+['Marliz Café',R,'20%',[1,2,3],'CD','$50.000','Vitacura'],
+['Zulu Kitchen & Bar',R,'20%',[1,2,3],'CD','$20.000','Vitacura'],
+['Danubio Azul',R,'20%',[1,2,3],'CD','$40.000','Las Condes'],
+['Antonella Bar',R,'20%',[7,1,2,3],'CD','Sin tope','Vitacura · Las Condes'],
+['Da Radda',R,'20%',[5,6,7,1],'CD','Sin tope','Las Condes · Huechuraba'],
+['Club Gordos',R,'20%',[1,3],'CD','Sin tope','Providencia'],
+['Fast Not Junk',R,'20%',[1,3],'CD','Sin tope','Las Condes · Providencia · La Florida'],
+['GRDS',R,'20%',[1,3],'CD','Sin tope','Las Condes · Providencia · La Florida'],
+['Kantu Thai',R,'20%',[1,2,3,4],'CD','$30.000','Providencia'],
+["My Hero's Café",R,'20%',[1,2,3,4,5,6],'CD','Sin tope','Providencia'],
+['Moscowa Restobar',R,'20%',[2,3,4],'CD','Sin tope','Providencia'],
+['Café Meche',R,'20%',[2,3,4,5],'CD','$20.000','Providencia'],
+['Punto País',R,'20%',[2,3],'CD','$100.000','Ñuñoa'],
+['Terraza Ibiza',R,'20%',[2,3],'CD','$20.000','Peñaflor'],
+['Vertigo',R,'20%',[4,5,6],'CD','$20.000','Vitacura'],
+['Misoya',R,'20%',[1,2],'CD','$20.000','Recoleta · Las Condes · Maipú'],
+['Sangucherías Gorilas',R,'20%',[1,2],'CD','$30.000','Las Condes · San Miguel'],
+// Café y comida rápida
+['Starbucks',F,'30%',[1],'CD','Sin tope','Presencial','Bebidas preparadas en barra'],
+['KFC',F,'30%',[1],'CD','Sin tope','Presencial','Combo Chicken Share Mixto'],
+["McDonald's",F,'40%',[2],'CD','—','App McDonald\'s','Compras sobre $12.000, McDelivery o Pide y Retira'],
+['Juan Valdez',F,'40%',[3],'C','Sin tope','Presencial','Bebidas preparadas en barra'],
+["Wendy's",F,'30%',[3],'CD','Sin tope','Presencial','Combo Baconator Doble'],
+['Chinawok',F,'30%',[3],'CD','Sin tope','Presencial','Combo Wok 1 Pollo Teriyaki'],
+['Blackdrop Coffee',F,'20%',[0],'CD','Sin tope',''],
+// Súper y delivery
+['Unimarc · Alvi · Mayorista 10',S,'10%',[0],'D','$10.000','Presencial','Cashback pagando con débito o QR App Bci. Primera compra del mes'],
+['PedidosYa Market',S,'30%',[0],'C','$8.000','Online','2 usos al mes'],
+['PedidosYa Plus',S,'1 año',[0],'C','—','Online','Membresía gratis para usuarios nuevos'],
+['Carnes Premium',S,'30%',[3],'C','Sin tope','Online o presencial'],
+['Mi Coca-Cola',S,'30%',[0],'C','$30.000','Online','Solo del 12 al 18 de octubre',12,18],
+['Viña Encierra',S,'20%',[5],'CD','Sin tope','Online o presencial','Todos los vinos. Cupón online ENCIERRA20'],
+// Bencina
+['Copec',B,'7%',[4],'C','$7.000','App Copec','Cashback. Activa antes en BciPlus+ (App Bci)'],
+// Salud
+['Salcobrand',H,'20%',[0],'CD','Sin tope','Presencial','Primera unidad de productos Mi Salcobrand. Genera el código en su app'],
+['Vitaminlife Salco',H,'30%',[3],'C','Sin tope','Online o presencial','Para online, cupón en la App Bci'],
+['Winkler Nutrition',H,'20%',[3],'C','Sin tope','Online'],
+['Hands & Company',H,'20%',[1,2,3],'CD','Sin tope','Presencial','Servicios seleccionados'],
+['Figurella',H,'30%',[0],'CD','Sin tope','Presencial'],
+['Kafi Body',H,'15%',[0],'CD','Sin tope','Online','Cupón PLAYERABCI'],
+['RedSalud',H,'$100 mil',[0],'C','—','Presencial','Cashback en implante dental unitario'],
+// Compras
+['Paula Benítez',M,'30%',[2],'C','$30.000','Online o presencial'],
+['Puppies & Kittens',M,'20%',[2],'CD','Sin tope','Online o presencial','BCIPELUQUERIAS (peluquería y veterinaria) o BCIPUPPIES (compras sobre $30.000)'],
+['Trial',M,'20%',[3],'CD','Sin tope','Online o presencial'],
+['Canadienne',M,'20%',[3],'CD','Sin tope','Online'],
+['Flores',M,'30%',[3],'CD','Sin tope','Presencial'],
+['Tessa',M,'15%',[3],'C','Sin tope','Online o presencial'],
+['La Papelaria',M,'20%',[3],'CD','Sin tope','Online o presencial'],
+['Mamut',M,'40%',[5],'C','$30.000','Presencial'],
+['Andesland',M,'30%',[5,6],'C','$30.000','Presencial'],
+['Cava Morandé',M,'45%',[0],'CD','Sin tope','Online'],
+['Totto',M,'25%',[0],'CD','Sin tope','Online o presencial','Cupón online TOTTOBCI'],
+['Mizos',M,'25%',[0],'CD','Sin tope','Online'],
+['Natura',M,'20%',[0],'CD','Sin tope','Online'],
+['Tribus Home',M,'20%',[0],'CD','Sin tope','Online'],
+['Tribus Rugs',M,'20%',[0],'CD','Sin tope','Online'],
+['Zig Zag',M,'20%',[0],'CD','Sin tope','Online'],
+['Karun',M,'20%',[0],'CD','Sin tope','Online'],
+['Simplit',M,'20%',[0],'CD','Sin tope','Online'],
+['E-Mobility',M,'20%',[0],'CD','Sin tope','Online'],
+['Yukids',M,'20%',[0],'CD','Sin tope','Presencial'],
+['Extra Life',M,'20%',[0],'CD','Sin tope','Online'],
+['Green Glass',M,'15%',[0],'CD','Sin tope','Online'],
+['Rosalinda',M,'15%',[0],'CD','Sin tope','Online'],
+['Bebesit',M,'10%',[0],'CD','Sin tope','Online'],
+// Panoramas
+['Cinépolis',P,'50%',[4,5,6,7],'C','Sin tope','Online o presencial','Entradas 2D'],
+['Cinépolis',P,'20%',[0],'C','Sin tope','Presencial','Combo Bci: Box Pop + 2 bebidas medianas'],
+['Mall Sport',P,'30%',[3],'CD','Sin tope','Presencial','Hasta 30% en entretención'],
+['Teatro Zoco',P,'30%',[0],'C','Sin tope','Online','Entradas'],
+['Teatro San Ginés',P,'20%',[0],'CD','Sin tope','Presencial','Café Bar'],
+['Teatro Municipal de Las Condes',P,'30%',[0],'CD','—','Online o presencial','Entradas'],
+['Viña Encierra',P,'30%',[5],'CD','Sin tope','Online o presencial','Tours (excluye almuerzo y picnic). Cupón ENCIERRA30'],
+// Viajes
+['JetSMART',V,'30%',[0],'C','Sin tope','Online','Packs Light, Smart y Full. Código: 6 primeros dígitos de tu tarjeta. Con débito: 20%'],
+['JetSMART',V,'+30%',[3],'C','Sin tope','Online','Vuelos desde o hacia Santiago, acumulable con packs. Código BCIMACHC (débito: 20%, BCIMACHD)'],
+['Accor',V,'10%',[0],'C','—','Online','Pullman, Novotel, Mercure, ibis. +10% si estás en ALL'],
+['Avis · Budget',V,'20%',[0],'C','Sin tope','Online'],
+['Estacionamiento aeropuerto SCL',V,'20%',[0],'C','—','Presencial'],
+['Membresía TravelUP',V,'15%',[0],'C','—','Online','Cashback con Classic o Gold. 1 compra al año'],
+['Cuotas sin interés',V,'3 o 6',[0],'C','—','Todo comercio','En todos los comercios del país con crédito Bci'],
+];
+// Zonas: 'lit' = cerca de Matanzas (Pichilemu, Santa Cruz); 'stgo' = presencial en Santiago; 'any' = online o cadena con presencia en ambos lados
+const LIT=new Set(['Pichilemu','Santa Cruz']);
+const STGO_CHAINS=new Set(['Starbucks','KFC',"McDonald's",'Juan Valdez',"Wendy's",'Chinawok','Hands & Company','Figurella','RedSalud','Flores','Mamut','Andesland','Yukids','Mall Sport','Teatro San Ginés','Teatro Municipal de Las Condes','Estacionamiento aeropuerto SCL','Paula Benítez','Trial','Tessa','La Papelaria','Carnes Premium','Puppies & Kittens','Vitaminlife Salco']);
+function zoneOf(it){
+  if(it[1]===R) return LIT.has(it[6])?'lit':'stgo';
+  if(it[1]===P) return it[0]==='Viña Encierra'?'lit':'stgo';
+  return STGO_CHAINS.has(it[0])&&!/online/i.test(it[6])?'stgo':'any';
+}
+const ZONES=[['auto','Auto','Santiago lun a mié, Matanzas jue a dom'],['stgo','Stgo','Santiago'],['lit','Matanzas','Matanzas y alrededores'],['all','Todo','Sin filtro de zona']];
+// Ficha exacta en Google Maps para restaurantes de 25% o más
+const PID={'Danés Bar & Restaurant':'ChIJk96hyhzPYpYR-9UONd0C7XQ','La Fabbrica':'ChIJXR2F_CjLYpYRljg81xsBxXU','Tigre Bravo':'ChIJHzYpOwDDYpYRytnwo6k1Ma8','Barra de Pickles':'ChIJpcDayrXFYpYRSwLoCNTx-vE','Kleine Kneipe':'ChIJMzHAq4_PYpYRqWKg2ifhJd8','La Casa Vieja':'ChIJR0J78TTJYpYRLE2NVQ9_J3s','Lin Lan':'ChIJ9fVJme3OYpYRfcSNwN0BCuE','Momiji Ramen':'ChIJZaZBj9HFYpYRq35pbCyyt8I','Calle y Barrio':'ChIJA72i-rvPYpYRCSb3-4YVTMU','Bar Italia':'ChIJtaoBLXzFYpYRPnjo8EZ_v-g','Danubio Azul':'ChIJN5eDYBXPYpYRUybyuV1Bawg','Diksabaa Shawarmas':'ChIJu19hW7vRYpYRogs20hx2j7c','La Chimba':'ChIJ17T7NgDFYpYRvdW6kiLf524','Lao Lao Foods':'ChIJLWB-9sjPYpYRFchL8FEWJlo','Los Vikingos':'ChIJF0TGo6zFYpYR2yB9TR0pCVg',"Ocean Pacific's":'ChIJI-CYvazFYpYR1FHgot_Sew4','Raffaella':'ChIJ22qudPXPYpYR7PjyA6N4sDI','Misky Mikuy':'ChIJExXBbVrOYpYR6ihei01hD6c','Tres Valles':'ChIJSU1hb_jFYpYRAKLjkb0sqW4','AC Kitchen':'ChIJwbCVvmnPYpYRTvkmmVrUYY8','Caoba Bar':'ChIJgXNai-zPYpYR8PqwRjD1anc','Entre Cavas y Ladrillos':'ChIJ1XTIJBfFYpYRyANzwd8sXUc','Guachita Culebra':'ChIJNUyPthrPYpYRmIkK0gMmdiA','Restobar Bravos':'ChIJCahX__XRYpYRNGaCQvbI5_4','Tera Restoran':'ChIJweVOP2DPYpYRlxnQgsOgtP4','Hijo del Inca':'ChIJ5zok3DbPYpYR9tjwaaXvaXY','OIA':'ChIJM7t_AQDPYpYRxINrCr7lyhM','Anima Cocktail Lab':'ChIJUeCHHADFYpYR3R8ICf8-e0k','Gueros':'ChIJPS9CIMPFYpYR0URtBX8XNk8','Hitomi':'ChIJzcFYcQXPYpYRgYkmAUphgLM','Kechua':'ChIJQdhPVPzFYpYRUIsJLmCzc-U','Omar Khayyam':'ChIJf9deepTFYpYR8oL1_wqzwnA','The Greens':'ChIJ26n59T_PYpYRg07WlVFNAhE','Wayna':'ChIJrSIFWUHRYpYRjMz9mwvpYHY','Al Pesto':'ChIJaS9CN_u4YpYRAxIvVzinak8','El Club del Ramen':'ChIJb_p0Q1TJYpYRarqheOsJ_mQ','Oporto':'ChIJeWjuOj7PYpYRnqxGj6ynhI0','Rugendas':'ChIJBbQv6BTPYpYR4SAU4QzpqSQ','Soho Thai':'ChIJnTMmJP7PYpYR_UEeLlhDojc','The Bistró':'ChIJo_OJFCjPYpYRi_rIBt4Bcnk','De Barrio':'ChIJAS8yjyPFYpYR9CY2GatO1Lo','La Santoría':'ChIJxaT0MnrPYpYR4OY1j9vXVl8','Impasto Restobar':'ChIJ0-k_gDvPYpYRWfMc0ON6IYY','Bar Porfirio':'ChIJA1AhzpbPYpYRcVaHKLdHick','Expendio':'ChIJjRgopLjPYpYRkeMQamQdVoo','Kanpai':'ChIJUSL3MIdZYZYRZ13y_Mp7r2c','Vino Bello':'ChIJ_1WtC1FlZJYRA64JWgwDIp4','Bocas del Mar':'ChIJYy3cHilZYZYROGBNDscXgvY'};
+const DN=['','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const DS=['','Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const CATS=['Todo',R,F,S,B,H,M,P,V];
+
+// MES VIGENTE: lo único que cambia la actualización mensual además de los datos.
+const MONTH={y:2026,m:10,name:'Octubre',holidays:[12,31],catalog:'https://cdn3.bci.cl/uploads/ef62c6b1-4c59-4aaa-b5f4-e92f32631b9d/original/Cata_logo_de_beneficios_Bci_Oct26.pdf',updated:'2026-10-09'};
+const DIM=new Date(MONTH.y,MONTH.m,0).getDate();
+function dateFor(wd,ref){ // próxima fecha del mes vigente (desde hoy) para ese día de semana
+  const base=ref.getMonth()===MONTH.m-1&&ref.getFullYear()===MONTH.y?ref.getDate():1;
+  for(let d=base;d<=DIM;d++){const w=new Date(MONTH.y,MONTH.m-1,d).getDay()||7; if(w===wd) return d;}
+  for(let d=1;d<=DIM;d++){const w=new Date(MONTH.y,MONTH.m-1,d).getDay()||7; if(w===wd) return d;}
+}
+const now=new Date();
+const todayWd=now.getDay()||7;
+const state={wd:todayWd,cat:'Todo',deb:false,where:'auto'};
+try{const s=JSON.parse(localStorage.getItem('bciPrefs')||'{}'); if(s.deb) state.deb=true; if(s.cat&&CATS.includes(s.cat)) state.cat=s.cat; if(s.where&&ZONES.some(z=>z[0]===s.where)) state.where=s.where;}catch(e){}
+function save(){try{localStorage.setItem('bciPrefs',JSON.stringify({deb:state.deb,cat:state.cat,where:state.where}))}catch(e){}}
+function activeZone(wd){return state.where==='auto'?(wd<=3?'stgo':'lit'):state.where}
+function num(p){const m=p.match(/\d+/);return m?+m[0]:0}
+function inZone(it,wd){const z=activeZone(wd), iz=zoneOf(it); return z==='all'||iz==='any'||iz===z}
+function applies(it,wd,dateNum,ignoreZone){
+  const [, , , days, k, , , , from, to]=it;
+  if(!(days.includes(0)||days.includes(wd))) return false;
+  if(state.deb && k==='C') return false;
+  if(from && (dateNum<from||dateNum>to)) return false;
+  return ignoreZone||inZone(it,wd);
+}
+const $=id=>document.getElementById(id);
+const CAT_SHORT={'Todo':'Todo',[R]:'Restaurantes',[F]:'Café',[S]:'Súper',[B]:'Bencina',[H]:'Salud',[M]:'Compras',[P]:'Panoramas',[V]:'Viajes'};
+const ZONE_NAME={stgo:'Santiago',lit:'Matanzas',all:'Todas las zonas'};
+function renderWhere(){
+  $('where').innerHTML='';
+  ZONES.forEach(([id,label,sub])=>{
+    const b=document.createElement('button');b.type='button';
+    b.setAttribute('aria-pressed',state.where===id);b.title=sub;
+    b.textContent=label;
+    b.onclick=()=>{state.where=id;save();render()};
+    $('where').appendChild(b);
+  });
+}
+function renderDays(){
+  $('days').innerHTML='';
+  for(let w=1;w<=7;w++){
+    const b=document.createElement('button');
+    b.type='button';b.className='day'+(w===todayWd?' today':'');
+    b.setAttribute('aria-pressed',w===state.wd);
+    b.setAttribute('aria-label',(w===todayWd?'Hoy, ':'')+DN[w]+' '+dateFor(w,now));
+    const dn=dateFor(w,now), n=DATA.filter(it=>!it[3].includes(0)&&applies(it,w,dn)&&num(it[2])>=40).length;
+    const h=Math.min(22,Math.round(n*2));
+    b.innerHTML=`<span class="col" aria-hidden="true"><i style="height:${h}px"></i></span><b>${w===todayWd?'Hoy':DS[w]}</b><span class="dt">${dn}</span>`;
+    b.title=n+' beneficios de 40% o más';
+    b.onclick=()=>{state.wd=w;render()};
+    $('days').appendChild(b);
+  }
+}
+function renderChips(){
+  $('chips').innerHTML='';
+  CATS.forEach(c=>{
+    const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=CAT_SHORT[c];
+    b.setAttribute('aria-pressed',c===state.cat);
+    b.onclick=()=>{state.cat=c;save();render()};
+    $('chips').appendChild(b);
+  });
+}
+function isLow(it){return (it[1]===R||it[1]===F)&&num(it[2])<=20}
+function render(){
+  renderDays();renderChips();renderWhere();
+  $('tDeb').setAttribute('aria-pressed',state.deb);
+  const wd=state.wd, dn=dateFor(wd,now), z=activeZone(wd);
+  $('dayTitle').innerHTML=`${wd===todayWd?'Hoy':DN[wd]} <em>${String(dn).padStart(2,'0')}.${String(MONTH.m).padStart(2,'0')}</em>`;
+  $('notes').innerHTML=MONTH.holidays.includes(dn)?'<span class="note">Feriado: confirma en la App Bci que el beneficio aplique.</span>':'';
+  renderBest(wd,dn);
+  const catOk=it=>state.cat==='Todo'||it[1]===state.cat;
+  const byPct=(a,b)=>{const sa=a[3].includes(0)?1:0,sb=b[3].includes(0)?1:0; return sa-sb || num(b[2])-num(a[2])};
+  const all=DATA.filter(it=>applies(it,wd,dn)&&catOk(it)).sort(byPct);
+  const low=all.filter(isLow);
+  const items=all.filter(it=>!isLow(it));
+  const fold=(label,list,compactFn)=>list.length?`<details class="others"><summary><span class="label">${label}<span class="cnt">${list.length}</span></span></summary><ul>${list.map(it=>li(it,compactFn(it))).join('')}</ul></details>`:'';
+  const lowHtml=fold('Restaurantes y cafés al 20%',low,()=>true);
+  const others=DATA.filter(it=>applies(it,wd,dn,true)&&!inZone(it,wd)&&catOk(it)).sort(byPct);
+  const othersHtml=fold(z==='lit'?'También en Santiago':'También cerca de Matanzas',others,isLow);
+  $('count').textContent=`${ZONE_NAME[z]} · ${items.length} beneficios`;
+  $('lede').innerHTML=lede(wd,dn,z);
+  if(!items.length){$('list').innerHTML='<div class="empty">Nada destacado en esta zona y categoría para este día.</div>'+lowHtml+othersHtml;return}
+  const groups={};
+  items.forEach(it=>{
+    const daily=it[3].includes(0);
+    const key=state.cat==='Todo'?(daily?'Todos los días · '+CAT_SHORT[it[1]]:CAT_SHORT[it[1]]):(daily?'Todos los días':'Solo '+(wd===todayWd?'hoy':DN[wd].toLowerCase()));
+    (groups[key]=groups[key]||[]).push(it);
+  });
+  const rank=k=>{const c=k.split(' · ').pop();return Object.values(CAT_SHORT).indexOf(c)};
+  const order=Object.keys(groups).sort((a,b)=>(a.startsWith('Todos')?1:0)-(b.startsWith('Todos')?1:0)||rank(a)-rank(b));
+  $('list').innerHTML=order.map(g=>`<section class="group"><h3 class="label"><span>${g}</span><span>${groups[g].length}</span></h3><ul>${groups[g].map(it=>li(it)).join('')}</ul></section>`).join('')+lowHtml+othersHtml;
+}
+// Sitios oficiales verificados; lo que no está aquí abre una búsqueda en Google
+const PANO={'Cinépolis':'https://www.cinepolischile.cl','Mall Sport':'https://www.mallsport.cl','Teatro Zoco':'https://www.teatrozoco.cl','Teatro San Ginés':'https://www.sangines.cl','Teatro Municipal de Las Condes':'https://www.tmlascondes.cl','Viña Encierra':'https://www.encierra.cl'};
+// Sitios oficiales verificados el 09-10-2026. Lo que no está aquí no se pudo confirmar y usa "Buscar".
+const SITE={'PedidosYa Market':'https://www.pedidosya.cl','PedidosYa Plus':'https://www.pedidosya.cl','JetSMART':'https://jetsmart.com/cl/es/','Viña Encierra':'https://www.encierra.cl',"McDonald's":'https://www.mcdonalds.cl',
+'Cava Morandé':'https://www.cavamorande.cl','Totto':'https://cl.totto.com/','Mizos':'https://www.mizos.cl','Natura':'https://www.natura.cl','Tribus Home':'https://www.tribushome.cl','Tribus Rugs':'https://www.tribusrugs.cl','Zig Zag':'https://www.zigzag.cl','Vitaminlife Salco':'https://salcobrand.cl','Paula Benítez':'https://www.paulabenitez.cl','Green Glass':'https://www.greenglass.cl','Bebesit':'https://www.bebesit.cl','Canadienne':'https://www.canadienne.cl','Trial':'https://www.trial.cl','Karun':'https://www.anteojoskarun.cl','Rosalinda':'https://www.rosalinda.cl','Avis · Budget':'https://www.avis.cl','Accor':'https://all.accor.com','E-Mobility':'https://www.e-mobility.cl','Tessa':'https://www.tessachile.com/','Kafi Body':'https://kafibody.com/'};
+// Presencial sin dirección única: Maps busca el local más cercano a ti.
+const MAPQ={'Unimarc · Alvi · Mayorista 10':'Unimarc','Estacionamiento aeropuerto SCL':'Estacionamiento Aeropuerto Arturo Merino Benítez'};
+const UA=navigator.userAgent||'';
+const MCD_APP=/iPhone|iPad|iPod/i.test(UA)?'https://apps.apple.com/cl/app/mcdonalds-ofertas-y-delivery/id1114009187'
+  :/Android/i.test(UA)?'https://play.google.com/store/apps/details?id=com.mcdo.mcdonalds':'https://www.mcdonalds.cl';
+// Un solo botón, un solo tamaño: "Ver" para todo, salvo "Activar".
+const a=(href,label,aria)=>`<a class="ver" href="${href}" target="_blank" rel="noopener" aria-label="${aria}">${label==='Activar'?'Activar':'Ver'}</a>`;
+function siteFor(n){return SITE[n]||`https://www.google.com/search?q=${encodeURIComponent(n+' Chile')}`}
+// Devuelve las acciones en orden de importancia: [principal, secundarias...]
+function actionsFor(it){
+  const [n,c,p,, , ,loc,note]=it, pct=num(p), out=[];
+  const maps=q=>`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+  const search=`https://www.google.com/search?q=${encodeURIComponent(n+' Chile')}`;
+  if(n==="McDonald's"){ out.push(a(MCD_APP,'Ver',"Abrir la app de McDonald's")); return out; }
+  if(c===R||c===F){
+    if(pct>=25){
+      const q=c===F?n:`${n} ${loc.split(' · ')[0]} Chile`;
+      out.push(a(PID[n]?`${maps(q)}&query_place_id=${PID[n]}`:maps(q),'Ver',`Ver ${n} en el mapa`));
+    }
+    return out;
+  }
+  if(c===P){ out.push(a(PANO[n]||search,'Ver',`Ver sitio de ${n}`)); return out; }
+  if(/activa/i.test(note||'')){ out.push(a('https://www.bciplus.cl/personas','Activar',`Activar ${n} en BciPlus+`)); return out; }
+  const ch=loc||'';
+  if(/online/i.test(ch)){
+    const verb=c===V?'Reservar':'Comprar';
+    out.push(SITE[n]?a(SITE[n],verb,`${verb} en ${n}`):a(search,'Buscar',`Buscar ${n} en Google`,'ver ir'));
+  } else if(/presencial/i.test(ch)){
+    out.push(n==='Flores'?a(search,'Buscar','Buscar Flores en Google','ver ir'):a(maps(MAPQ[n]||n),'Ver',`Ver ${n} en el mapa`));
+  }
+  return out;
+}
+function actionFor(it){return actionsFor(it)[0]||''}
+// Toda la fila es el link (nombre con ↗). Solo "Activar" sigue siendo botón.
+function linkOf(it){
+  const h=actionsFor(it)[0]; if(!h) return null;
+  const m=h.match(/href="([^"]+)"[^>]*aria-label="([^"]+)">([^<]+)</);
+  return m?{href:m[1],aria:m[2],activar:m[3]==='Activar',html:h}:null;
+}
+function nameHtml(n,lk){
+  return lk&&!lk.activar?`<a class="nm" href="${lk.href}" target="_blank" rel="noopener" aria-label="${lk.aria}">${n}<span class="arr" aria-hidden="true">↗</span></a>`:n;
+}
+
+function lede(wd,dn,z){
+  const day=DATA.filter(it=>!it[3].includes(0)&&applies(it,wd,dn)&&!isLow(it));
+  const rest=day.filter(it=>(it[1]===R||it[1]===F)&&num(it[2])>=40).length;
+  const top=[...day].sort((a,b)=>num(b[2])-num(a[2]))[0];
+  const when=wd===todayWd?'Hoy':'El '+DN[wd].toLowerCase();
+  if(!day.length) return `${when} no hay beneficios exclusivos en ${ZONE_NAME[z]}. Quedan los de todos los días.`;
+  const strength=rest>=6?'es un día fuerte':rest>=2?'es un día normal':'es un día flojo';
+  return `${when} ${strength}${z==='all'?'':' en '+ZONE_NAME[z]}: <b>${rest}</b> ${rest===1?'lugar':'lugares'} para comer al 40% o más. Lo más alto: <b>${top[2]} en ${top[0]}</b>.`;
+}
+function wedge(p,hi){
+  const f=Math.min(1,num(p)/100), r=13, c=14, ang=f*2*Math.PI-Math.PI/2;
+  const x=c+r*Math.cos(ang), y=c+r*Math.sin(ang), large=f>.5?1:0;
+  return `<svg class="glyph${hi?' hi':''}" viewBox="0 0 28 28" aria-hidden="true"><circle class="base" cx="14" cy="14" r="13"/><path class="w" d="M14 14 L14 1 A13 13 0 ${large} 1 ${x.toFixed(2)} ${y.toFixed(2)} Z"/></svg>`;
+}
+// Horarios de Google Maps (oct 2026), lunes a domingo. '' = cerrado. Rangos separados por coma.
+const W=(a,b,c,d,e,f,g)=>[a,b,c,d,e,f,g];
+const X=(r)=>W(r,r,r,r,r,r,r);
+const HOURS={
+'Danés Bar & Restaurant':W('12:30-22:00','12:30-22:00','12:30-22:00','12:30-23:00','12:30-23:00','12:30-23:00','12:30-22:00'),
+'La Fabbrica':W('09:30-23:00','09:30-23:00','09:30-23:00','09:30-23:00','09:30-00:00','09:30-00:00','09:30-22:00'),
+'Barra de Pickles':W('','12:30-01:00','12:30-01:00','12:30-01:00','12:30-01:00','12:30-01:00','13:00-19:00'),
+'Kleine Kneipe':W('13:00-00:00','13:00-00:00','13:00-00:00','13:00-01:00','13:00-02:00','13:00-01:00','13:00-00:00'),
+'La Casa Vieja':W('12:30-22:00','12:30-22:00','12:30-22:00','12:30-22:00','12:30-22:00','12:30-22:00','12:30-17:00'),
+'Lin Lan':W('11:30-23:00','11:30-23:00','11:30-23:00','11:30-23:00','11:30-23:00','11:30-23:00','11:30-17:00'),
+'Momiji Ramen':W('','12:30-22:00','12:30-22:00','12:30-22:00','12:30-22:00','12:30-22:00','12:30-20:00'),
+'Calle y Barrio':W('','13:00-22:30','13:00-22:30','13:00-23:00','13:00-23:00','13:00-23:00','13:00-17:30'),
+'Bar Italia':W('13:00-22:00','13:00-22:00','13:00-00:00','13:00-00:00','13:00-00:00','13:00-00:00','13:00-20:00'),
+'Danubio Azul':W('12:00-22:30','12:00-22:30','12:00-23:30','12:00-23:30','12:00-23:30','12:00-23:30','12:00-22:30'),
+'Diksabaa Shawarmas':W('','13:00-23:00','13:00-23:00','13:00-23:00','13:00-23:00','13:00-23:00','13:00-17:00'),
+'La Chimba':W('11:00-01:00','11:00-01:00','11:00-01:00','11:00-02:00','11:00-02:00','11:00-02:00','12:00-22:30'),
+'Lao Lao Foods':W('13:00-00:00','13:00-00:00','13:00-00:00','13:00-00:00','13:00-00:00','13:00-00:00',''),
+'Los Vikingos':X('12:00-23:30'),
+"Ocean Pacific's":W('12:30-23:00','12:30-23:00','12:30-23:00','12:30-23:00','12:00-23:30','12:00-23:30','12:00-22:00'),
+'Raffaella':W('','12:45-23:30','12:45-23:30','12:45-23:30','12:45-23:30','12:45-23:30','12:45-17:00'),
+'Misky Mikuy':W('13:00-16:30,19:00-23:00','13:00-16:30,19:00-23:00','13:00-16:30,19:00-23:00','13:00-16:30,19:00-23:00','13:00-16:30,19:00-23:00','13:00-16:30,19:00-23:00','13:00-16:00'),
+'Tres Valles':W('13:00-22:30','13:00-22:30','13:00-22:30','13:00-22:30','13:00-23:30','13:00-23:30','13:00-21:30'),
+'Caoba Bar':W('19:00-01:00','19:00-01:00','19:00-01:00','19:00-01:30','19:00-02:30','19:00-02:30','19:00-01:00'),
+'Entre Cavas y Ladrillos':W('12:30-23:00','12:30-23:00','12:30-23:00','12:30-23:00','12:30-00:00','12:30-00:00','12:30-18:00'),
+'Guachita Culebra':W('17:00-01:00','17:00-01:00','17:00-01:00','17:00-02:00','17:00-02:00','17:00-02:00',''),
+'Restobar Bravos':W('','18:00-00:00','18:00-00:00','18:00-00:00','17:00-01:00','17:00-01:00',''),
+'Tera Restoran':W('','12:30-22:30','12:30-22:30','12:30-22:30','12:30-22:30','12:30-22:30','12:30-17:30'),
+'Hijo del Inca':W('12:30-23:00','12:30-23:00','12:30-23:00','12:30-23:00','12:30-00:00','12:30-23:00','12:30-18:00'),
+'OIA':W('','','13:00-01:00','13:00-01:00','13:00-01:00','13:00-00:00','13:00-20:00'),
+'Anima Cocktail Lab':W('','18:00-00:00','18:00-00:00','18:00-01:30','18:00-02:30','18:00-02:30','13:00-19:30'),
+'Gueros':W('11:00-00:00','11:00-00:00','11:00-00:00','11:00-01:00','11:00-01:00','11:00-00:00','11:00-23:00'),
+'Hitomi':W('','18:00-23:00','18:00-23:00','18:00-00:00','18:00-00:00','18:00-00:00',''),
+'Kechua':W('12:00-23:00','12:00-23:00','12:00-00:00','12:00-00:00','12:00-01:00','12:00-01:00','12:00-23:00'),
+'Omar Khayyam':W('12:00-21:30','12:00-21:30','12:00-21:30','12:00-21:30','12:00-22:30','12:00-22:30','12:00-16:30'),
+'The Greens':W('07:30-17:00','07:30-17:00','07:30-16:00','07:30-16:00','07:30-16:00','',''),
+'Wayna':W('','12:45-23:00','12:45-23:00','12:45-23:00','12:45-23:00','12:30-23:00',''),
+'Al Pesto':W('13:00-00:00','13:00-00:00','13:00-00:00','13:00-00:30','13:00-00:30','13:00-00:30','13:00-18:30'),
+'Oporto':W('','12:45-23:30','12:45-00:00','12:45-00:00','12:45-00:00','12:45-00:00',''),
+'Rugendas':W('06:30-23:00','06:30-23:00','06:30-23:00','06:30-23:00','06:30-23:00','07:00-23:00','07:00-23:00'),
+'Soho Thai':W('','12:30-22:30','12:30-22:30','12:30-22:30','12:30-23:30','12:30-23:30','12:30-16:30'),
+'The Bistró':W('12:00-23:00','12:00-23:00','12:00-23:00','12:00-23:00','12:00-23:00','12:30-23:00','12:00-23:00'),
+'De Barrio':W('12:30-23:30','12:30-23:30','12:30-23:30','12:30-23:30','12:30-00:00','12:30-00:00','12:30-00:00'),
+'La Santoría':W('13:00-22:00','12:30-01:00','12:30-02:00','12:30-02:30','12:30-03:30','12:30-03:30','14:00-23:00'),
+'Impasto Restobar':W('17:45-01:00','17:45-01:00','17:45-01:00','17:45-01:00','17:45-01:00','12:00-02:00','13:00-20:00'),
+'Bar Porfirio':W('','18:00-02:00','18:00-02:00','18:00-02:00','18:00-02:00','13:30-02:00','13:30-18:00'),
+'Expendio':W('','18:00-02:00','18:00-02:00','18:00-02:00','18:00-02:00','13:30-02:00','13:30-18:00'),
+'Kanpai':X('12:00-01:00'),
+'Vino Bello':W('13:00-17:00,18:00-21:00','13:00-17:00,18:00-21:00','13:00-17:00,18:00-21:00','13:00-17:00,18:00-21:00','13:00-17:00,18:00-21:30','13:00-17:00,18:00-21:30','13:00-17:00,18:00-21:00'),
+'Bocas del Mar':X('12:00-00:00'),
+};
+const mins=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
+function ranges(n,wd){
+  const h=HOURS[n]; if(!h) return null;
+  const s=h[wd-1]; if(!s) return [];
+  return s.split(',').map(r=>{const [a,b]=r.split('-');let o=mins(a),c=mins(b);if(c<=o)c+=1440;return {o,c,a,b}});
+}
+// Texto de horario: hoy en vivo (amarillo si cierra en menos de 90 min o ya cerró); otro día, el horario.
+function hoursInfo(n,wd){
+  const r=ranges(n,wd); if(r===null) return null;
+  if(!r.length) return {t:'Cerrado este día',warn:true};
+  const span=r.map(x=>x.a+'–'+x.b).join(', ');
+  if(wd!==todayWd) return {t:'Abre '+span,warn:false};
+  const d=new Date(), m=d.getHours()*60+d.getMinutes();
+  const prev=ranges(n,wd===1?7:wd-1)||[];
+  const carry=prev.find(x=>x.c>1440&&m+1440<x.c);
+  if(carry){const left=carry.c-(m+1440); return left<=90?{t:`Cierra a las ${carry.b}`,warn:true}:{t:`Abierto hasta las ${carry.b}`,warn:false}}
+  const open=r.find(x=>m>=x.o&&m<x.c);
+  if(open){const left=open.c-m; return left<=90?{t:`Cierra a las ${open.b}`,warn:true}:{t:`Abierto hasta las ${open.b}`,warn:false}}
+  const next=r.find(x=>m<x.o);
+  if(next) return {t:`Abre a las ${next.a}`,warn:false};
+  return {t:`Ya cerró (${r[r.length-1].b})`,warn:true};
+}
+const clp=v=>'$'+Math.round(v).toLocaleString('es-CL');
+// Ahorro en lenguaje simple: el tope es el máximo de descuento; se alcanza con cuenta = tope / %.
+function saving(p,tope,cash){
+  if(!p.endsWith('%')) return '';
+  if(!tope||tope==='—') return '';
+  if(tope==='Sin tope') return 'sin tope';
+  const t=Number(tope.replace(/[^\d]/g,'')), pct=num(p);
+  if(!t||!pct) return '';
+  return {max:clp(t),bill:clp(t*100/pct)};
+}
+function payWith(k){return k==='C'?'Paga con Visa Gold':k==='D'?'Paga con débito':'Débito o Visa Gold'}
+function hoursHtml(n,wd){const h=hoursInfo(n,wd);return h?(h.warn?`<span class="caveat">${h.t}</span>`:h.t):''}
+function renderBest(wd,dn){
+  const pool=DATA.filter(it=>applies(it,wd,dn)&&!isLow(it)&&it[2].includes('%'));
+  pool.sort((a,b)=>{const sa=a[3].includes(0)?1:0,sb=b[3].includes(0)?1:0; return sa-sb||num(b[2])-num(a[2])||(b[1]===R)-(a[1]===R)});
+  const seen=new Set(), picks=[], daily=[];
+  for(const it of pool){
+    if(seen.has(it[0])) continue; seen.add(it[0]);
+    if(it[3].includes(0)){ if(daily.length<2) daily.push(it); }
+    else if(picks.length<3) picks.push(it);
+  }
+  if(!picks.length&&!daily.length){$('best').innerHTML='';return}
+  const label=wd===todayWd?'Lo mejor de hoy':'Lo mejor del '+DN[wd].toLowerCase();
+  const dailyHtml=daily.length?`<p class="daily">Todos los días: ${daily.map(it=>`<b>${it[2]}</b> ${it[0]}`).join(' · ')}</p>`:'';
+  $('best').innerHTML=`<span class="label">${label}</span>`+(picks.length?'':'<p class="daily">Nada exclusivo de este día en tu zona.</p>')+picks.map(it=>{
+    const [n,c,p,,k,,loc,note]=it;
+    const sub=c===R||c===F?loc:(note||loc);
+    const hrs=hoursHtml(n,wd);
+    const lk=linkOf(it);
+    return `<div class="row${lk&&!lk.activar?' tap':''}">${wedge(p,num(p)>=40)}<div class="pct${num(p)>=40?' hi':''}">${p}</div><div class="info"><div class="name">${nameHtml(n,lk)}</div><div class="meta">${[sub,payWith(k)].join(' · ')}</div>${hrs?`<div class="meta">${hrs}</div>`:''}</div>${lk&&lk.activar?lk.html:''}</div>`;
+  }).join('')+dailyHtml;
+}
+function li(it,compact){
+  const [n,c,p,days,k,tope,loc,note]=it;
+  const wd=state.wd;
+  const multi=days.includes(0)?'':days.length>1?days.map(d=>DS[d]).join(' '):'';
+  const cash=/cashback/i.test(note||'')||c===B;
+  const sv=saving(p,tope,cash);
+  if(compact){
+    return `<li class="mini"><div class="pct">${p}</div><div class="info"><span class="name">${n}</span> <span class="meta-inline">${[loc,days.includes(0)?'todos los días':multi,sv&&sv.max?'hasta '+sv.max:''].filter(Boolean).join(' · ')}</span></div></li>`;
+  }
+  const hi=num(p)>=40&&p.includes('%');
+  const line1=payWith(k);
+  const line2=[loc,multi].filter(Boolean).join(' · ');
+  const hrs=(c===R||c===F)?hoursHtml(n,wd):'';
+  const noteHtml=note?(/activa|solo del/i.test(note)?`<span class="caveat">${note}</span>`:note):'';
+  const lk=linkOf(it);
+  const btn=lk&&lk.activar?`<div class="acts">${lk.html}</div>`:'';
+  return `<li class="${[btn?'has-btn':'',lk&&!lk.activar?'tap':''].join(' ').trim()}"><div class="pct${hi?' hi':''}${p.length>5?' long':''}">${p.endsWith('%')?wedge(p,hi):''}${p}${cash?`<small>cashback</small>`:''}${sv?(sv.max?`<small>hasta ${sv.max}</small><small class="bill">con ${sv.bill}</small>`:`<small>${sv}</small>`):''}</div><div class="info"><div class="name">${nameHtml(n,lk)}</div><div class="meta">${line1}</div>${line2?`<div class="meta">${line2}</div>`:''}${hrs?`<div class="meta">${hrs}</div>`:''}${noteHtml?`<div class="meta">${noteHtml}</div>`:''}</div>${btn}</li>`;
+}
+function tick(){const d=new Date();$('clock').textContent=d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit',hour12:false})+' · Santiago'}
+tick();setInterval(()=>{tick();if(state.wd===todayWd)render()},60000);
+$('tDeb').onclick=()=>{state.deb=!state.deb;save();render()};
+$('appTitle').textContent='Descuentos Bci · '+MONTH.name;
+$('srcMonth').textContent=MONTH.name.toLowerCase()+' '+MONTH.y;
+$('srcHol').textContent=MONTH.holidays.length?' ('+MONTH.holidays.join(' y ')+')':'';
+render();
+
+// Ícono de app: el signo del sistema en clave Byrne. Disco base, porción azul = descuento,
+// arco amarillo que mide el ángulo y dos radios blancos. El favicon usa el mejor % del día; el de inicio, 40%.
+(function(){
+  try{
+    const draw=(size,f)=>{
+      const c=document.createElement('canvas');c.width=c.height=size;const x=c.getContext('2d'),s=size,cx=s/2,cy=s/2;
+      x.fillStyle='#111';x.fillRect(0,0,s,s);
+      const r=s*0.30,a0=-Math.PI/2,a1=a0+f*Math.PI*2;
+      x.beginPath();x.arc(cx,cy,r,0,Math.PI*2);x.fillStyle='#262626';x.fill();
+      x.beginPath();x.moveTo(cx,cy);x.arc(cx,cy,r,a0,a1);x.closePath();x.fillStyle='#2f43ff';x.fill();
+      x.beginPath();x.arc(cx,cy,s*0.40,a0,a1);x.strokeStyle='#ffd400';x.lineWidth=s*0.05;x.stroke();
+      x.strokeStyle='#f4f4f2';x.lineWidth=Math.max(1,s*0.018);
+      x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+Math.cos(a0)*s*0.46,cy+Math.sin(a0)*s*0.46);x.stroke();
+      x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+Math.cos(a1)*r,cy+Math.sin(a1)*r);x.stroke();
+      return c.toDataURL('image/png');
+    };
+    const head=document.head;
+    const add=(tag,attrs)=>{const e=document.createElement(tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));head.appendChild(e)};
+    const hosted=!!head.querySelector('link[rel="apple-touch-icon"][href$=".png"]');
+    head.querySelectorAll('link[rel~="icon"]').forEach(l=>l.remove());
+    if(!hosted) head.querySelectorAll('link[rel="apple-touch-icon"],meta[name="theme-color"],meta[name^="apple-mobile"]').forEach(l=>l.remove());
+    const dn=dateFor(todayWd,now);
+    const best=Math.max(0,...DATA.filter(it=>applies(it,todayWd,dn)&&it[2].endsWith('%')).map(it=>num(it[2])));
+    add('link',{rel:'icon',href:draw(64,(best||40)/100),sizes:'64x64'});
+    if(hosted) return;
+    add('link',{rel:'apple-touch-icon',href:draw(180,0.4),sizes:'180x180'});
+    add('meta',{name:'apple-mobile-web-app-capable',content:'yes'});
+    add('meta',{name:'mobile-web-app-capable',content:'yes'});
+    add('meta',{name:'apple-mobile-web-app-status-bar-style',content:'default'});
+    add('meta',{name:'apple-mobile-web-app-title',content:'Bci Oct'});
+    add('meta',{name:'theme-color',content:getComputedStyle(document.body).backgroundColor||'#f6f6f4'});
+  }catch(e){}
+})();
+</script>
+
+</body>
+</html>
