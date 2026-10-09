@@ -64,6 +64,12 @@ button{font:inherit;color:inherit}
 
 /* Controles */
 .ctrl{display:flex;gap:8px;align-items:stretch}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.cards button{display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;text-transform:uppercase;padding:8px 4px;border-radius:3px;cursor:pointer}
+.cards button i{width:9px;height:9px;border:1px solid currentColor;border-radius:1px;display:block}
+.cards button[aria-pressed="true"]{color:var(--ink);border-color:var(--ink)}
+.cards button[aria-pressed="true"] i{background:var(--ink);border-color:var(--ink)}
+.cards button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .where{flex:1;display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:3px;padding:2px;gap:2px;background:var(--surface)}
 .where button,.tog{border:0;background:none;font-family:var(--mono);font-size:.7rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:7px 2px;border-radius:2px;cursor:pointer}
 .where button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
@@ -157,13 +163,14 @@ footer a{color:var(--muted)}
   <div id="notes"></div>
   <div class="ctrl">
     <div class="where" id="where" role="group" aria-label="Dónde estás"></div>
-    <button class="tog" id="tDeb" aria-pressed="false" type="button" title="Mostrar solo lo que acepta débito">Débito</button>
+
   </div>
+  <div class="cards" id="cards" role="group" aria-label="Tarjetas que llevas"></div>
   <div class="chips" id="chips" role="toolbar" aria-label="Categoría"></div>
   <section class="best" id="best" aria-label="Sugerencias del día"></section>
   <div id="list"></div>
   <footer>
-    Fuente: catálogo oficial de beneficios Bci, <span id="srcMonth"></span>. Excluye lo exclusivo de Platinum, Signature, Infinite y Black. Descuentos no acumulables. Cashback online: entra al comercio desde BciPlus+. Confirma en la App Bci antes de ir, sobre todo en feriados<span id="srcHol"></span>.
+    Fuente: catálogo oficial de beneficios Bci y liderbci.cl/descuentos, <span id="srcMonth"></span>. Elige arriba las tarjetas que llevas: cada beneficio dice con cuál pagar. Excluye lo exclusivo de Platinum, Signature, Infinite y Black. Descuentos no acumulables. Cashback online: entra al comercio desde BciPlus+. Confirma en la App Bci antes de ir, sobre todo en feriados<span id="srcHol"></span>.
     <br><a href="https://www.bci.cl/beneficios/beneficios-bci" target="_blank" rel="noopener">Beneficios en bci.cl</a>
   </footer>
 </div>
@@ -257,11 +264,11 @@ const DATA=[
 ['Misoya',R,'20%',[1,2],'CD','$20.000','Recoleta · Las Condes · Maipú'],
 ['Sangucherías Gorilas',R,'20%',[1,2],'CD','$30.000','Las Condes · San Miguel'],
 // Café y comida rápida
-['Starbucks',F,'30%',[1],'CD','Sin tope','Presencial','Bebidas preparadas en barra'],
-['KFC',F,'30%',[1],'CD','Sin tope','Presencial','Combo Chicken Share Mixto'],
-["McDonald's",F,'40%',[2],'CD','—','App McDonald\'s','Compras sobre $12.000, McDelivery o Pide y Retira'],
+['Starbucks',F,'30%',[1],'CDL','Sin tope','Presencial','Bebidas preparadas en barra. Con Lider: solo bebidas calientes, pídelo en caja'],
+['KFC',F,'30%',[1],'CDL','Sin tope','Presencial','Combo Chicken Share Mixto'],
+["McDonald's",F,'40%',[2],'CDL','Sin tope','App McDonald\'s','Compras sobre $12.000, McDelivery o Pide y Retira'],
 ['Juan Valdez',F,'40%',[3],'C','Sin tope','Presencial','Bebidas preparadas en barra'],
-["Wendy's",F,'30%',[3],'CD','Sin tope','Presencial','Combo Baconator Doble'],
+["Wendy's",F,'30%',[3],'CDL','Sin tope','Presencial','Combo Baconator Doble'],
 ['Chinawok',F,'30%',[3],'CD','Sin tope','Presencial','Combo Wok 1 Pollo Teriyaki'],
 ['Blackdrop Coffee',F,'20%',[0],'CD','Sin tope',''],
 // Súper y delivery
@@ -307,17 +314,42 @@ const DATA=[
 ['Rosalinda',M,'15%',[0],'CD','Sin tope','Online'],
 ['Bebesit',M,'10%',[0],'CD','Sin tope','Online'],
 // Panoramas
-['Cinépolis',P,'50%',[4,5,6,7],'C','Sin tope','Online o presencial','Entradas 2D'],
+['Cinépolis',P,'50%',[4,5,6,7],'CL','Sin tope','Online o presencial','Entradas 2D. Con Lider: pide el cupón en liderbci.cl, 2 al mes'],
 ['Cinépolis',P,'20%',[0],'C','Sin tope','Presencial','Combo Bci: Box Pop + 2 bebidas medianas'],
 ['Mall Sport',P,'30%',[3],'CD','Sin tope','Presencial','Hasta 30% en entretención'],
 ['Teatro Zoco',P,'30%',[0],'C','Sin tope','Online','Entradas'],
 ['Teatro San Ginés',P,'20%',[0],'CD','Sin tope','Presencial','Café Bar'],
 ['Teatro Municipal de Las Condes',P,'30%',[0],'CD','—','Online o presencial','Entradas'],
 ['Viña Encierra',P,'30%',[5],'CD','Sin tope','Online o presencial','Tours (excluye almuerzo y picnic). Cupón ENCIERRA30'],
+// Lider Bci (tarjeta de crédito Lider Bci), octubre 2026. Condiciones revisadas una por una en liderbci.cl/descuentos
+['Papa Johns',F,'30%',[1,5],'L','$15.000','Online o presencial','Compras sobre $15.000. Online: 6 primeros dígitos de la tarjeta como cupón'],
+['Burger King',F,'40%',[3],'L','$7.000','Presencial','Compras sobre $3.000. Pide el descuento en caja'],
+['Just Burger',F,'40%',[4],'L','$10.000','Online o presencial','Locales, web y app. Online: 6 primeros dígitos. Hasta 500 canjes'],
+['Tarragona',F,'40%',[4],'L','Sin tope','Presencial','En los locales dentro de Lider. Pide el descuento en caja'],
+['Buffet Express',F,'20%',[5],'L','Sin tope','Presencial','Total de la boleta. Pide el descuento en caja'],
+['Shell',B,'$100/L',[2],'L','$4.000','App Shell','Descuento por litro pagando en la App Shell. Máximo 2 cargas al mes'],
+['Lider',S,'6%',[0],'L','—','Online o presencial','Cashback en Pesos Mi Club en Lider, Express, Lider.cl y App. Hasta 200.000 al mes'],
+['Lider en 3 cuotas',S,'3 cuotas',[0],'L','—','Online o presencial','Precio contado, sin pie ni interés en Lider, Express, Acuenta y Central Mayorista'],
+['Rappi',S,'50%',[0],'L','$6.500','Online','Primera compra, solo usuarios nuevos. Compras sobre $12.000'],
+['Lipigas',S,'15%',[0],'L','Sin tope','Online','Cilindros 5, 11, 11 Plus y 15 kg. Máximo 2 compras al mes. Pide el código en liderbci.cl'],
+['Otros comercios',M,'1%',[0],'L','—','Online o presencial','Cashback en Pesos Mi Club. Excluye súper, combustible y grandes tiendas'],
+['Salcobrand.cl',H,'20%',[0],'L','$10.000','Online','Cashback en productos de la promoción. 1 uso. Solo del 8 al 12 de octubre',8,12],
+['Smart Fit',H,'$29.900',[0],'L','—','Online','Plan Black al mes por 12 meses, matrícula $26.800. Activa el cupón en liderbci.cl'],
+['Clínica Norden',H,'25%',[0],'L','Sin tope','Presencial','Todo el arancel dental, sin laboratorio. Pide el descuento en caja'],
+['Clínica Everest',H,'50%',[0],'L','—','Presencial','1ra y 2da cuota de planes dentales. Limpieza $24.990'],
+['Padre Mariano',H,'60%',[0],'L','—','Presencial','Hasta 60% en especialidades dentales y 70% en ortodoncia. Reserva antes'],
+['Cpech',M,'60%',[0],'L','Sin tope','Online o presencial','+Notas y PAES (2 o más cursos), Orientadores y Exámenes Libres'],
+['Filadd',M,'20%',[0],'L','Sin tope','Online','Packs preuniversitario y Nota 7. Cupón: 6 primeros dígitos'],
+['Kidzania',P,'30%',[0],'L','—','Online','Entradas, máximo 2 por tarjeta. Cupón: 6 primeros dígitos. No aplica noche de amigos'],
+['Flixbus',V,'15%',[0],'L','Sin tope','Online','Solo en la app Flixbus, con el código único de liderbci.cl'],
+['OK Parking',V,'25%',[0],'L','Sin tope','Online','Reserva online. Cupón: 6 primeros dígitos de la tarjeta'],
+['Rentcars',V,'10%',[0],'L','Sin tope','Online','Arriendo de autos. Código BCI10RENT'],
+['JetSMART · Lider',V,'20%',[0],'L','Sin tope','Online','Rutas nacionales e internacionales, viajes del 19 oct al 18 mar. Código CYBERBCI. Solo del 6 al 9 de octubre',6,9],
+['Despegar',V,'18 o 24',[0],'L','—','Online o presencial','Cuotas sin interés en vuelos nacionales. Solo del 8 al 11 de octubre',8,11],
 // Viajes
 ['JetSMART',V,'30%',[0],'C','Sin tope','Online','Packs Light, Smart y Full. Código: 6 primeros dígitos de tu tarjeta. Con débito: 20%'],
 ['JetSMART',V,'+30%',[3],'C','Sin tope','Online','Vuelos desde o hacia Santiago, acumulable con packs. Código BCIMACHC (débito: 20%, BCIMACHD)'],
-['Accor',V,'10%',[0],'C','—','Online','Pullman, Novotel, Mercure, ibis. +10% si estás en ALL'],
+['Accor',V,'10%',[0],'CL','—','Online','Pullman, Novotel, Mercure, ibis. +10% si estás en ALL'],
 ['Avis · Budget',V,'20%',[0],'C','Sin tope','Online'],
 ['Estacionamiento aeropuerto SCL',V,'20%',[0],'C','—','Presencial'],
 ['Membresía TravelUP',V,'15%',[0],'C','—','Online','Cashback con Classic o Gold. 1 compra al año'],
@@ -325,7 +357,7 @@ const DATA=[
 ];
 // Zonas: 'lit' = cerca de Matanzas (Pichilemu, Santa Cruz); 'stgo' = presencial en Santiago; 'any' = online o cadena con presencia en ambos lados
 const LIT=new Set(['Pichilemu','Santa Cruz']);
-const STGO_CHAINS=new Set(['Starbucks','KFC',"McDonald's",'Juan Valdez',"Wendy's",'Chinawok','Hands & Company','Figurella','RedSalud','Flores','Mamut','Andesland','Yukids','Mall Sport','Teatro San Ginés','Teatro Municipal de Las Condes','Estacionamiento aeropuerto SCL','Paula Benítez','Trial','Tessa','La Papelaria','Carnes Premium','Puppies & Kittens','Vitaminlife Salco']);
+const STGO_CHAINS=new Set(['Burger King','Clínica Norden','Clínica Everest','Padre Mariano','Starbucks','KFC',"McDonald's",'Juan Valdez',"Wendy's",'Chinawok','Hands & Company','Figurella','RedSalud','Flores','Mamut','Andesland','Yukids','Mall Sport','Teatro San Ginés','Teatro Municipal de Las Condes','Estacionamiento aeropuerto SCL','Paula Benítez','Trial','Tessa','La Papelaria','Carnes Premium','Puppies & Kittens','Vitaminlife Salco']);
 function zoneOf(it){
   if(it[1]===R) return LIT.has(it[6])?'lit':'stgo';
   if(it[1]===P) return it[0]==='Viña Encierra'?'lit':'stgo';
@@ -348,16 +380,17 @@ function dateFor(wd,ref){ // próxima fecha del mes vigente (desde hoy) para ese
 }
 const now=new Date();
 const todayWd=now.getDay()||7;
-const state={wd:todayWd,cat:'Todo',deb:false,where:'auto'};
-try{const s=JSON.parse(localStorage.getItem('bciPrefs')||'{}'); if(s.deb) state.deb=true; if(s.cat&&CATS.includes(s.cat)) state.cat=s.cat; if(s.where&&ZONES.some(z=>z[0]===s.where)) state.where=s.where;}catch(e){}
-function save(){try{localStorage.setItem('bciPrefs',JSON.stringify({deb:state.deb,cat:state.cat,where:state.where}))}catch(e){}}
+const CARDS=[['C','Visa Gold'],['D','Débito'],['L','Lider Bci']];
+const state={wd:todayWd,cat:'Todo',cards:'CDL',where:'auto'};
+try{const s=JSON.parse(localStorage.getItem('bciPrefs')||'{}'); if(typeof s.cards==='string'&&/^[CDL]{1,3}$/.test(s.cards)) state.cards=s.cards; if(s.cat&&CATS.includes(s.cat)) state.cat=s.cat; if(s.where&&ZONES.some(z=>z[0]===s.where)) state.where=s.where;}catch(e){}
+function save(){try{localStorage.setItem('bciPrefs',JSON.stringify({cards:state.cards,cat:state.cat,where:state.where}))}catch(e){}}
 function activeZone(wd){return state.where==='auto'?(wd<=3?'stgo':'lit'):state.where}
 function num(p){const m=p.match(/\d+/);return m?+m[0]:0}
 function inZone(it,wd){const z=activeZone(wd), iz=zoneOf(it); return z==='all'||iz==='any'||iz===z}
 function applies(it,wd,dateNum,ignoreZone){
   const [, , , days, k, , , , from, to]=it;
   if(!(days.includes(0)||days.includes(wd))) return false;
-  if(state.deb && k==='C') return false;
+  if(![...k].some(c=>state.cards.includes(c))) return false;
   if(from && (dateNum<from||dateNum>to)) return false;
   return ignoreZone||inZone(it,wd);
 }
@@ -401,7 +434,7 @@ function renderChips(){
 function isLow(it){return (it[1]===R||it[1]===F)&&num(it[2])<=20}
 function render(){
   renderDays();renderChips();renderWhere();
-  $('tDeb').setAttribute('aria-pressed',state.deb);
+  renderCards();
   const wd=state.wd, dn=dateFor(wd,now), z=activeZone(wd);
   $('dayTitle').innerHTML=`${wd===todayWd?'Hoy':DN[wd]} <em>${String(dn).padStart(2,'0')}.${String(MONTH.m).padStart(2,'0')}</em>`;
   $('notes').innerHTML=MONTH.holidays.includes(dn)?'<span class="note">Feriado: confirma en la App Bci que el beneficio aplique.</span>':'';
@@ -429,12 +462,15 @@ function render(){
   $('list').innerHTML=order.map(g=>`<section class="group"><h3 class="label"><span>${g}</span><span>${groups[g].length}</span></h3><ul>${groups[g].map(it=>li(it)).join('')}</ul></section>`).join('')+lowHtml+othersHtml;
 }
 // Sitios oficiales verificados; lo que no está aquí abre una búsqueda en Google
-const PANO={'Cinépolis':'https://www.cinepolischile.cl','Mall Sport':'https://www.mallsport.cl','Teatro Zoco':'https://www.teatrozoco.cl','Teatro San Ginés':'https://www.sangines.cl','Teatro Municipal de Las Condes':'https://www.tmlascondes.cl','Viña Encierra':'https://www.encierra.cl'};
+const PANO={'Kidzania':'https://www.liderbci.cl/descuentos/kidzania','Cinépolis':'https://www.cinepolischile.cl','Mall Sport':'https://www.mallsport.cl','Teatro Zoco':'https://www.teatrozoco.cl','Teatro San Ginés':'https://www.sangines.cl','Teatro Municipal de Las Condes':'https://www.tmlascondes.cl','Viña Encierra':'https://www.encierra.cl'};
 // Sitios oficiales verificados el 09-10-2026. Lo que no está aquí no se pudo confirmar y usa "Buscar".
-const SITE={'PedidosYa Market':'https://www.pedidosya.cl','PedidosYa Plus':'https://www.pedidosya.cl','JetSMART':'https://jetsmart.com/cl/es/','Viña Encierra':'https://www.encierra.cl',"McDonald's":'https://www.mcdonalds.cl',
+const SITE={'Salcobrand.cl':'https://salcobrand.cl','Despegar':'https://www.despegar.cl','PedidosYa Market':'https://www.pedidosya.cl','PedidosYa Plus':'https://www.pedidosya.cl','JetSMART':'https://jetsmart.com/cl/es/','Viña Encierra':'https://www.encierra.cl',"McDonald's":'https://www.mcdonalds.cl',
 'Cava Morandé':'https://www.cavamorande.cl','Totto':'https://cl.totto.com/','Mizos':'https://www.mizos.cl','Natura':'https://www.natura.cl','Tribus Home':'https://www.tribushome.cl','Tribus Rugs':'https://www.tribusrugs.cl','Zig Zag':'https://www.zigzag.cl','Vitaminlife Salco':'https://salcobrand.cl','Paula Benítez':'https://www.paulabenitez.cl','Green Glass':'https://www.greenglass.cl','Bebesit':'https://www.bebesit.cl','Canadienne':'https://www.canadienne.cl','Trial':'https://www.trial.cl','Karun':'https://www.anteojoskarun.cl','Rosalinda':'https://www.rosalinda.cl','Avis · Budget':'https://www.avis.cl','Accor':'https://all.accor.com','E-Mobility':'https://www.e-mobility.cl','Tessa':'https://www.tessachile.com/','Kafi Body':'https://kafibody.com/'};
+// Ficha oficial de cada beneficio Lider Bci (condiciones y cómo canjear).
+const LB='https://www.liderbci.cl/descuentos/';
+const LIDER={'Papa Johns':LB+'papa-johns','Just Burger':LB+'just-burger','Shell':LB+'mi-copiloto','Lider':LB+'6-porciento-de-devolucion-en-lider','Lider en 3 cuotas':LB+'3-cuotas-precio-contado-sin-pie-y-sin-intereses','Rappi':LB+'rappi','Lipigas':LB+'lipigas','Otros comercios':LB+'1-porciento-de-devolucion-en-otros-comercios','Smart Fit':LB+'smart-fit','Cpech':LB+'cpech','Filadd':LB+'descuento-preu-filadd','Kidzania':LB+'kidzania','Flixbus':LB+'flixbus','OK Parking':LB+'ok-parking','Rentcars':LB+'rentcars','JetSMART · Lider':LB+'cyber-jetsmart'};
 // Presencial sin dirección única: Maps busca el local más cercano a ti.
-const MAPQ={'Unimarc · Alvi · Mayorista 10':'Unimarc','Estacionamiento aeropuerto SCL':'Estacionamiento Aeropuerto Arturo Merino Benítez'};
+const MAPQ={'Tarragona':'Tarragona Lider','Buffet Express':'Buffet Express Lider','Unimarc · Alvi · Mayorista 10':'Unimarc','Estacionamiento aeropuerto SCL':'Estacionamiento Aeropuerto Arturo Merino Benítez'};
 const UA=navigator.userAgent||'';
 const MCD_APP=/iPhone|iPad|iPod/i.test(UA)?'https://apps.apple.com/cl/app/mcdonalds-ofertas-y-delivery/id1114009187'
   :/Android/i.test(UA)?'https://play.google.com/store/apps/details?id=com.mcdo.mcdonalds':'https://www.mcdonalds.cl';
@@ -455,7 +491,11 @@ function actionsFor(it){
     return out;
   }
   if(c===P){ out.push(a(PANO[n]||search,'Ver',`Ver sitio de ${n}`)); return out; }
-  if(/activa/i.test(note||'')){ out.push(a('https://www.bciplus.cl/personas','Activar',`Activar ${n} en BciPlus+`)); return out; }
+  if(/activa/i.test(note||'')){
+    const lider=/liderbci/i.test(note);
+    out.push(a(lider?(LIDER[n]||'https://www.liderbci.cl/descuentos'):'https://www.bciplus.cl/personas','Activar',`Activar ${n} en ${lider?'Lider Bci':'BciPlus+'}`)); return out;
+  }
+  if(it[4]==='L'&&!SITE[n]&&LIDER[n]&&!/presencial/i.test(loc||'')){ out.push(a(LIDER[n],'Ver',`Ver condiciones de ${n} en Lider Bci`)); return out; }
   const ch=loc||'';
   if(/online/i.test(ch)){
     const verb=c===V?'Reservar':'Comprar';
@@ -572,7 +612,13 @@ function saving(p,tope,cash){
   if(!t||!pct) return '';
   return {max:clp(t),bill:clp(t*100/pct)};
 }
-function payWith(k){return k==='C'?'Paga con Visa Gold':k==='D'?'Paga con débito':'Débito o Visa Gold'}
+function payWith(k){
+  const names={C:'Visa Gold',D:'débito',L:'Lider Bci'};
+  const own=[...k].filter(c=>state.cards.includes(c)).map(c=>names[c]);
+  const list=own.length?own:[...k].map(c=>names[c]);
+  const txt=list.length===1?list[0]:list.slice(0,-1).join(', ')+' o '+list[list.length-1];
+  return 'Paga con '+txt;
+}
 function hoursHtml(n,wd){const h=hoursInfo(n,wd);return h?(h.warn?`<span class="caveat">${h.t}</span>`:h.t):''}
 function renderBest(wd,dn){
   const pool=DATA.filter(it=>applies(it,wd,dn)&&!isLow(it)&&it[2].includes('%'));
@@ -614,7 +660,21 @@ function li(it,compact){
 }
 function tick(){const d=new Date();$('clock').textContent=d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit',hour12:false})+' · Santiago'}
 tick();setInterval(()=>{tick();if(state.wd===todayWd)render()},60000);
-$('tDeb').onclick=()=>{state.deb=!state.deb;save();render()};
+function renderCards(){
+  $('cards').innerHTML='';
+  CARDS.forEach(([c,label])=>{
+    const b=document.createElement('button');b.type='button';
+    const on=state.cards.includes(c);
+    b.setAttribute('aria-pressed',on);
+    b.innerHTML=`<i aria-hidden="true"></i>${label}`;
+    b.onclick=()=>{
+      let next=on?state.cards.replace(c,''):state.cards+c;
+      if(!next) return; // al menos una tarjeta
+      state.cards=CARDS.map(x=>x[0]).filter(x=>next.includes(x)).join('');save();render();
+    };
+    $('cards').appendChild(b);
+  });
+}
 $('appTitle').textContent='Descuentos Bci · '+MONTH.name;
 $('srcMonth').textContent=MONTH.name.toLowerCase()+' '+MONTH.y;
 $('srcHol').textContent=MONTH.holidays.length?' ('+MONTH.holidays.join(' y ')+')':'';
