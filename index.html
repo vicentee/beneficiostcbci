@@ -175,6 +175,12 @@ footer a{color:var(--muted)}
 .msg .pick:first-child{border-top:0;padding-top:0}
 .msg .pick .lead{font-weight:600}
 .msg .pick:first-child .lead{color:var(--accent)}
+.msg .qr{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.msg .qr-b{border:1px solid var(--accent);background:none;color:var(--accent);border-radius:3px;padding:7px 12px;font-family:var(--mono);font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+.msg .qr-b:disabled{opacity:.45;cursor:default}
+.msg .sec{font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px}
+.msg .sec:first-child{margin-top:0}
+.msg .tip{margin:10px 0 0;padding:8px 10px;border-left:2px solid var(--accent);font-size:.84rem}
 .msg .ex,.msg .more{color:var(--muted);font-size:.8rem}
 .msg .more{margin:6px 0 0}
 .chat-sug{display:flex;gap:6px;overflow-x:auto;padding:6px 0 10px;scrollbar-width:none}
@@ -219,7 +225,7 @@ footer a{color:var(--muted)}
 <section class="chat" id="chat" hidden aria-label="Asistente de beneficios">
   <header><span class="label">Pregúntale a tus tarjetas</span><button type="button" id="chatX" aria-label="Cerrar">×</button></header>
   <div class="chat-log" id="chatLog" aria-live="polite"></div>
-  <div class="chat-sug" id="chatSug"><button type="button">¿Qué día me conviene echar bencina?</button><button type="button">¿Dónde como hoy?</button><button type="button">Café con descuento</button><button type="button">Panorama el fin de semana en Matanzas</button></div>
+  <div class="chat-sug" id="chatSug"><button type="button">¿Qué día me conviene echar bencina?</button><button type="button">¿Dónde como hoy?</button><button type="button">El sábado voy a Santiago, ¿qué puedo hacer?</button><button type="button">Quiero comprar vinos</button><button type="button">Café con descuento</button></div>
   <form id="chatForm" autocomplete="off"><input id="chatIn" type="text" placeholder="Escribe tu pregunta" aria-label="Pregunta"><button type="submit">Enviar</button></form>
 </section>
 
@@ -731,7 +737,7 @@ $('srcHol').textContent=MONTH.holidays.length?' ('+MONTH.holidays.join(' y ')+')
 render();
 
 // Auto-actualización de la app instalada (solo en vicentee.github.io): si hay una versión nueva publicada, recarga.
-const BUILD='20261009102716';
+const BUILD='20261009103203';
 function checkUpdate(){
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(h=>{
@@ -792,8 +798,8 @@ function fuelValue(it,liters){
   const v=p.includes('/L')?num(p)*liters:num(p)/100*liters*FUEL_PRICE;
   return Math.min(v,cap);
 }
-function answer(q){
-  const Q=parseQuery(q);
+function answer(q,over){
+  const Q=Object.assign(parseQuery(q),over||{});
   if(!Q.cats&&!Q.names) return {html:`No entendí qué buscas. Prueba con un rubro o un comercio: <b>bencina</b>, <b>comer</b>, <b>café</b>, <b>cine</b>, <b>farmacia</b>, <b>viajes</b> o un nombre como <b>Starbucks</b>.`};
   const inNames=it=>Q.names&&Q.names.has(it[0]);
   const inTopic=it=>Q.cats&&Q.cats.includes(it[1])&&(!Q.only||Q.only.test(norm(it[0])));
@@ -819,8 +825,12 @@ function answer(q){
   }
   let list=[...picks.values()];
   if(!list.length&&!Q._retry&&(Q.days||Q.zone)){
-    const alt=answer.call(null,q.replace(/hoy|manana|mañana|fin de semana|finde|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|en matanzas|en pichilemu|en santiago/gi,' '));
-    if(!alt.empty) return {html:`No hay beneficios de ${Q.label||'eso'} ${Q.zone?'en '+ZONE_NAME[Q.zone]+' ':''}${Q.days?'para '+days.map(d=>DN[d].toLowerCase()).join(' o '):''}. Lo más cercano:`+alt.html};
+    const stripped=q.replace(/hoy|manana|mañana|fin de semana|finde|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|en matanzas|en pichilemu|en santiago/gi,' ');
+    let alt=answer(stripped,Object.assign({},over||{},{days:Q.days,zone:'all',_retry:true}));
+    if(alt.empty||!Q.days) alt=answer(stripped,Object.assign({},over||{},{days:null,zone:null,_retry:true}));
+    const ez=Q.zone||(Q.days?activeZone(Q.days[0]):null);
+    const ctx=[ez&&ez!=='all'?'en '+ZONE_NAME[ez]:'',Q.days?'el '+days.map(d=>DN[d].toLowerCase()).join(' o '):''].filter(Boolean).join(' ');
+    if(!alt.empty) return {html:`<p class="more" style="margin:0 0 8px">${ctx?ctx[0].toUpperCase()+ctx.slice(1)+' no':'No'} hay ${Q.label||'beneficios'} con descuento. Opciones si te mueves:</p>`+alt.html};
   }
   if(!list.length){
     const where=Q.zone?` en ${ZONE_NAME[Q.zone]}`:'';
@@ -851,10 +861,93 @@ function answer(q){
   return {html:top.map(line).join('')+(more>0?`<p class="more">Y ${more} ${more===1?'opción':'opciones'} más en la lista.</p>`:'')+(isFuel?`<p class="more">Estimación con bencina a ~${clp(FUEL_PRICE)} el litro.</p>`:'')};
 }
 // UI
+// ---------- Intuición: preguntas de aclaración y planes ----------
+// Eventos de compras (fechas anunciadas). La tarea mensual los mantiene al día.
+const EVENTS=[
+  {name:'CyberMonday',from:'2026-10-05',to:'2026-10-07',note:'Bci extendió sus beneficios Cyber hasta el 10 de octubre'},
+  {name:'Black Friday',from:'2026-11-27',to:'2026-11-30',note:'fecha anunciada por BlackFriday.cl'},
+];
+const WINE_BUY=new Set(['Cava Morandé','Viña Encierra']);
+const WINE_OUT=/vermut|negroni|cava|barrica|vino|bar\b|cocktail|caoba|guachita|anima/;
+let PENDING=null;
+const DAY_NAMES=d=>d.map(x=>DN[x].toLowerCase()).join(' o ');
+function ctxText(Q){
+  const when=Q.days?(Q.days.length===1&&Q.days[0]===todayWd?'hoy':'el '+DAY_NAMES(Q.days)):'';
+  const where=Q.zone?' en '+ZONE_NAME[Q.zone]:'';
+  return (when+where).trim();
+}
+function qr(opts){return `<div class="qr">${opts.map(o=>`<button type="button" class="qr-b">${o}</button>`).join('')}</div>`}
+function section(title,html){return `<p class="sec">${title}</p>`+html}
+function eventsAhead(days=75){
+  const t0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  return EVENTS.map(e=>({...e,f:new Date(e.from+'T00:00'),t:new Date(e.to+'T23:59')}))
+    .filter(e=>e.t>=t0&&(e.f-t0)/864e5<=days);
+}
+function fmtRange(e){
+  const o={day:'numeric',month:'long'};
+  return e.f.toLocaleDateString('es-CL',o)+(e.from!==e.to?' al '+e.t.toLocaleDateString('es-CL',o):'');
+}
+function wineBuy(q){
+  const base=answer(q,{names:WINE_BUY,cats:[S,M],only:null,label:'vinos',days:null,zone:'all'});
+  const t0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const ev=eventsAhead();
+  let tip='';
+  if(ev.length){
+    const e=ev[0], live=e.f<=t0;
+    const days=Math.round((e.f-t0)/864e5);
+    tip=live
+      ? `<p class="tip"><b>${e.name} está activo</b> hasta el ${e.t.toLocaleDateString('es-CL',{day:'numeric',month:'long'})}. Revisa si Cava Morandé tiene precio Cyber y si tu 45% Bci se aplica encima: algunas tiendas lo permiten y otras no. Confírmalo en el carro antes de pagar.</p>`
+      : `<p class="tip"><b>Se viene ${e.name}</b> (${fmtRange(e)}, en ${days} días; ${e.note}). Si no te urge, espera: si Cava Morandé participa, podrías sumar su precio rebajado a tu 45% Bci. Confírmalo en el carro antes de pagar, porque no todas las tiendas lo permiten.</p>`;
+  }
+  return {html:base.html+tip};
+}
+function wineOut(q){
+  const Q=parseQuery(q);
+  const names=new Set(DATA.filter(it=>it[1]===R&&WINE_OUT.test(norm(it[0]))).map(it=>it[0]));
+  return answer(q,{names,cats:null,label:'bares',days:Q.days,zone:Q.zone});
+}
+function both(q){
+  return {html:section('Para comer',answer(q,{cats:[R,F],names:null,only:null,label:'comer'}).html)+section('Panoramas',answer(q,{cats:[P],names:null,only:null,label:'panoramas'}).html)};
+}
+// Decide si responder directo o hacer UNA pregunta corta.
+function respond(q){
+  const t=norm(q);
+  if(PENDING){
+    const p=PENDING; PENDING=null;
+    if(p.kind==='plan'){
+      if(/dos|ambos|todo|las dos|los 2|ambas/.test(t)) return both(p.q);
+      if(/comer|comida|almorz|cenar|restaur/.test(t)) return answer(p.q,{cats:[R,F],names:null,only:null,label:'comer'});
+      if(/panoram|cine|teatro|salir|hacer/.test(t)) return answer(p.q,{cats:[P],names:null,only:null,label:'panoramas'});
+    }
+    if(p.kind==='vino'){
+      if(/compr|botell|casa|caja|online|pedir/.test(t)) return wineBuy(p.q);
+      if(/tomar|salir|bar|copa/.test(t)) return wineOut(p.q);
+    }
+    // si no responde a la pregunta, se trata como una consulta nueva
+  }
+  // Vinos
+  if(/\bvino|vinos|vinito|tinto|blanco|espumante|champa|botella de/.test(t)){
+    if(/compr|botell|caja|pedir|online|casa|regal/.test(t)) return wineBuy(q);
+    if(/tomar|salir|\bbar\b|copa|carta/.test(t)) return wineOut(q);
+    PENDING={kind:'vino',q};
+    return {html:`¿Quieres comprar botellas o salir a tomar?`+qr(['Comprar botellas','Salir a tomar'])};
+  }
+  // Plan abierto: hay día o zona, o pide "qué hacer", pero no dice qué
+  const Q=parseQuery(q);
+  const open=/que (puedo|podemos|hago|hacemos|hay)|hacer|plan\b|planes|salir\b|aprovech/.test(t);
+  if(!Q.cats&&!Q.names&&(open||Q.days||Q.zone)){
+    PENDING={kind:'plan',q};
+    const c=ctxText(Q);
+    return {html:`¿Qué te tinca${c?' '+c:''}: comer, un panorama o los dos?`+qr(['Comer','Panorama','Los dos'])};
+  }
+  return answer(q);
+}
+
 const CHAT=[];
 function chatAdd(role,html){CHAT.push({role,html});const box=$('chatLog');const m=document.createElement('div');m.className='msg '+role;m.innerHTML=html;box.appendChild(m);box.scrollTop=box.scrollHeight;
+  m.querySelectorAll('.qr-b').forEach(b=>b.onclick=()=>{b.parentNode.querySelectorAll('button').forEach(x=>x.disabled=true);ask(b.textContent)});
   m.querySelectorAll('.pick').forEach(b=>b.onclick=()=>{const wd=b.dataset.wd;if(wd)state.wd=+wd;const c=b.dataset.cat;state.cat=c===F||c===R?'Todo':c;render();toggleChat(false);window.scrollTo({top:$('best').offsetTop-80,behavior:'smooth'})});}
-function ask(q){q=q.trim();if(!q)return;chatAdd('me',q.replace(/[<>&]/g,s=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[s])));chatAdd('bot',answer(q).html);$('chatIn').value='';}
+function ask(q){q=q.trim();if(!q)return;chatAdd('me',q.replace(/[<>&]/g,s=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[s])));chatAdd('bot',respond(q).html);$('chatIn').value='';}
 function toggleChat(open){$('chat').hidden=!open;$('chatScrim').hidden=!open;document.body.style.overflow=open?'hidden':'';$('chatBtn').setAttribute('aria-expanded',open);if(open){if(!CHAT.length)chatAdd('bot','Pregúntame por un rubro, un comercio o un día. Respondo con tus tarjetas encendidas y tu zona.');setTimeout(()=>$('chatIn').focus(),50)}}
 $('chatBtn').onclick=()=>toggleChat($('chat').hidden);
 $('chatX').onclick=()=>toggleChat(false);
