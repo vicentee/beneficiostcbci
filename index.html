@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -722,6 +723,18 @@ $('appTitle').textContent='Descuentos Bci · '+MONTH.name;
 $('srcMonth').textContent=MONTH.name.toLowerCase()+' '+MONTH.y;
 $('srcHol').textContent=MONTH.holidays.length?' ('+MONTH.holidays.join(' y ')+')':'';
 render();
+
+// Auto-actualización de la app instalada (solo en vicentee.github.io): si hay una versión nueva publicada, recarga.
+const BUILD='20261009101959';
+function checkUpdate(){
+  if(!/github\.io$/.test(location.hostname)) return;
+  fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(h=>{
+    const m=h.match(/const BUILD='([^']+)'/);
+    if(m&&m[1]!==BUILD) location.replace(location.pathname+'?v='+encodeURIComponent(m[1]));
+  }).catch(()=>{});
+}
+checkUpdate();
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});
 // ---------- Asistente: responde preguntas con los datos de la página ----------
 const FUEL_PRICE=1490, FUEL_LITERS=40; // referencia: bencina 93 en RM, octubre 2026 (aprox.)
 const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
