@@ -147,11 +147,9 @@ footer a{color:var(--muted)}
 
 /* Asistente */
 .wrap{padding-bottom:48px}
-@media (max-width:620px){.wrap{padding-right:46px}}
-.chat-btn{position:fixed;top:0;right:0;bottom:0;z-index:20;width:30px;border:0;border-radius:0;background:var(--accent);color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
-.chat-btn .rail-t{writing-mode:vertical-rl;transform:rotate(180deg);font-family:var(--mono);font-size:.66rem;letter-spacing:.32em;text-transform:uppercase;font-weight:500}
-.chat-btn .rail-q{font-family:var(--mono);font-size:.95rem;line-height:1;width:20px;height:20px;border:1px solid rgba(255,255,255,.7);border-radius:50%;display:grid;place-items:center}
-.chat-btn:hover .rail-q,.chat-btn:active .rail-q{background:#fff;color:var(--accent)}
+@media (max-width:620px){.wrap{padding-right:50px}}
+.chat-btn{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:20;width:38px;height:44px;border:0;border-radius:2px 0 0 2px;background:var(--accent);color:#fff;cursor:pointer;display:grid;place-items:center;font-family:var(--mono);font-size:1.15rem;font-weight:500;line-height:1}
+.chat-btn:active{background:var(--ink)}
 .chat-btn:focus-visible{outline:2px solid var(--ink);outline-offset:-4px}
 .chat-btn[aria-expanded="true"]{display:none}
 .chat-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -211,7 +209,7 @@ footer a{color:var(--muted)}
     <br><a href="https://www.bci.cl/beneficios/beneficios-bci" target="_blank" rel="noopener">Beneficios en bci.cl</a>
   </footer>
 </div>
-<button type="button" class="chat-btn" id="chatBtn" aria-expanded="false" aria-controls="chat" aria-label="Preguntar"><span class="rail-t">Preguntar</span><span class="rail-q" aria-hidden="true">?</span></button>
+<button type="button" class="chat-btn" id="chatBtn" aria-expanded="false" aria-controls="chat" aria-label="Preguntar">?</button>
 <div class="chat-scrim" id="chatScrim" hidden></div>
 <section class="chat" id="chat" hidden aria-label="Asistente de beneficios">
   <header><span class="label">Pregúntale a tus tarjetas</span><button type="button" id="chatX" aria-label="Cerrar">×</button></header>
