@@ -144,6 +144,34 @@ li.mini .name{font-weight:400}
 .empty{padding:28px 0;color:var(--muted);font-size:.88rem}
 footer{margin-top:36px;font-size:.74rem;color:var(--faint);line-height:1.6}
 footer a{color:var(--muted)}
+
+/* Asistente */
+.wrap{padding-bottom:88px}
+.chat-btn{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;display:flex;align-items:center;gap:8px;background:var(--ink);color:var(--bg);border:0;border-radius:3px;padding:11px 14px;font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:0 6px 20px color-mix(in srgb,var(--ink) 25%,transparent)}
+.chat-btn i{width:8px;height:8px;border-radius:50%;background:var(--accent);display:block}
+.chat-btn[aria-expanded="true"]{display:none}
+.chat-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chat{position:fixed;left:0;right:0;bottom:0;z-index:30;max-width:560px;margin:0 auto;height:min(78vh,620px);background:var(--bg);border-top:2px solid var(--ink);display:flex;flex-direction:column;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 30px color-mix(in srgb,var(--ink) 18%,transparent)}
+.chat[hidden]{display:none}
+.chat header{display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.chat header button{border:0;background:none;font-size:1.4rem;line-height:1;color:var(--muted);cursor:pointer;padding:2px 6px}
+.chat-log{flex:1;overflow-y:auto;padding:12px 0;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:92%;font-size:.9rem;line-height:1.45}
+.msg.me{align-self:flex-end;background:var(--ink);color:var(--bg);padding:8px 11px;border-radius:3px}
+.msg.bot{align-self:flex-start}
+.msg .pick{display:block;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:9px 0;font:inherit;color:var(--ink);cursor:pointer}
+.msg .pick:first-child{border-top:0;padding-top:0}
+.msg .pick .lead{font-weight:600}
+.msg .pick:first-child .lead{color:var(--accent)}
+.msg .ex,.msg .more{color:var(--muted);font-size:.8rem}
+.msg .more{margin:6px 0 0}
+.chat-sug{display:flex;gap:6px;overflow-x:auto;padding:6px 0 10px;scrollbar-width:none}
+.chat-sug::-webkit-scrollbar{display:none}
+.chat-sug button{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:3px;padding:6px 10px;font-size:.78rem;cursor:pointer;font-family:var(--sans)}
+.chat form{display:flex;gap:8px}
+.chat input{flex:1;min-width:0;border:1px solid var(--ink);background:var(--surface);color:var(--ink);border-radius:3px;padding:10px 12px;font:inherit;font-size:16px}
+.chat form button{border:0;background:var(--ink);color:var(--bg);border-radius:3px;padding:0 14px;font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.chat input:focus-visible,.chat button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -174,6 +202,13 @@ footer a{color:var(--muted)}
     <br><a href="https://www.bci.cl/beneficios/beneficios-bci" target="_blank" rel="noopener">Beneficios en bci.cl</a>
   </footer>
 </div>
+<button type="button" class="chat-btn" id="chatBtn" aria-expanded="false" aria-controls="chat"><i aria-hidden="true"></i>Preguntar</button>
+<section class="chat" id="chat" hidden aria-label="Asistente de beneficios">
+  <header><span class="label">Pregúntale a tus tarjetas</span><button type="button" id="chatX" aria-label="Cerrar">×</button></header>
+  <div class="chat-log" id="chatLog" aria-live="polite"></div>
+  <div class="chat-sug" id="chatSug"><button type="button">¿Qué día me conviene echar bencina?</button><button type="button">¿Dónde como hoy?</button><button type="button">Café con descuento</button><button type="button">Panorama el fin de semana en Matanzas</button></div>
+  <form id="chatForm" autocomplete="off"><input id="chatIn" type="text" placeholder="Escribe tu pregunta" aria-label="Pregunta"><button type="submit">Enviar</button></form>
+</section>
 
 <script>
 // d: 1=lun ... 7=dom, 0 = todos los días. k: C=solo crédito, CD=crédito o débito, D=solo débito
@@ -679,6 +714,126 @@ $('appTitle').textContent='Descuentos Bci · '+MONTH.name;
 $('srcMonth').textContent=MONTH.name.toLowerCase()+' '+MONTH.y;
 $('srcHol').textContent=MONTH.holidays.length?' ('+MONTH.holidays.join(' y ')+')':'';
 render();
+// ---------- Asistente: responde preguntas con los datos de la página ----------
+const FUEL_PRICE=1490, FUEL_LITERS=40; // referencia: bencina 93 en RM, octubre 2026 (aprox.)
+const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const WEEK={lunes:1,martes:2,miercoles:3,jueves:4,viernes:5,sabado:6,domingo:7};
+const TOPICS=[
+  {re:/bencin|combustib|gasolin|cargar|nafta|petrol|diesel|copec|shell|litro/,cats:[B],label:'bencina'},
+  {re:/cafe|starbucks|valdez|blackdrop/,cats:[F],only:/starbucks|valdez|blackdrop/,label:'café'},
+  {re:/farmac|remedio|medicament|vitamin/,cats:[H],only:/salcobrand|vitaminlife/,label:'farmacia'},
+  {re:/donde como|que como|para comer|comer|almuerz|cena|cenar|restaur|comida|sushi|ramen|pizza|hambur|burger|carne|parrill|peruan|nikkei|thai|bar\b|trago|cocktail|once|desayun/,cats:[R,F],label:'comer'},
+  {re:/supermerc|super\b|mercado|delivery|pedidosya|rappi|unimarc|gas\b|lipigas|cilindro/,cats:[S],label:'súper y delivery'},
+  {re:/farmac|salud|dent|clinic|gimnas|gym|vitamin|salcobrand/,cats:[H],label:'salud'},
+  {re:/cine|pelicul|panoram|teatro|kidzania|entreten|niñ|ninos/,cats:[P],label:'panoramas'},
+  {re:/viaj|vuelo|avion|pasaje|hotel|arriendo|rent|auto\b|bus\b|flixbus|estacionam|parking/,cats:[V],label:'viajes'},
+  {re:/ropa|regalo|tienda|vino|libro|decorac|hogar|mascota|perro|gato/,cats:[M],label:'compras'},
+];
+function parseQuery(q){
+  const t=norm(q), out={cats:null,names:null,days:null,zone:null,cards:null,liters:FUEL_LITERS,label:''};
+  // tarjetas mencionadas
+  const cards=[];
+  if(/(con|tarjeta|la)\s+lider|lider\s*bci/.test(t)) cards.push('L');
+  if(/debito/.test(t)) cards.push('D');
+  if(/gold|visa|credito bci/.test(t)) cards.push('C');
+  if(cards.length) out.cards=cards.join('');
+  // comercio por nombre
+  const names=new Set();
+  DATA.forEach(it=>{
+    const n=norm(it[0]).replace(/[^a-z0-9 ]/g,' ').trim();
+    const STOP=/^(lider|restaurant|restaurante|kitchen|bistro|house|club|food|foods|cafe|bar|cocktail|express|tienda|clinica|teatro)$/;
+    const words=n.split(' ').filter(w=>w.length>=5&&!STOP.test(w));
+    if((n.length>=4&&n!=='lider'&&new RegExp('\\b'+n+'\\b').test(t))||words.some(w=>new RegExp('\\b'+w+'\\b').test(t))) names.add(it[0]);
+  });
+  if(names.size) out.names=names;
+  out.raw=t;
+  // tema
+  for(const tp of TOPICS){ if(tp.re.test(t)){ out.cats=tp.cats; out.label=tp.label; out.only=tp.only||null; break; } }
+  // días
+  if(/\bhoy\b/.test(t)) out.days=[todayWd];
+  else if(/manana/.test(t)) out.days=[todayWd%7+1];
+  else if(/fin de semana|finde/.test(t)) out.days=[6,7];
+  else { const d=Object.entries(WEEK).filter(([k])=>t.includes(k)).map(([,v])=>v); if(d.length) out.days=d; }
+  // zona
+  if(/matanzas|pichilemu|playa|costa|santa cruz|colchagua|navidad/.test(t)) out.zone='lit';
+  else if(/santiago|providencia|las condes|vitacura|barnechea|nunoa|bellavista|lastarria/.test(t)) out.zone='stgo';
+  const l=t.match(/(\d{2,3})\s*(l\b|lt|litro)/); if(l) out.liters=+l[1];
+  return out;
+}
+function fuelValue(it,liters){
+  const [,,p,,,tope]=it, cap=Number((tope||'').replace(/[^\d]/g,''))||Infinity;
+  const v=p.includes('/L')?num(p)*liters:num(p)/100*liters*FUEL_PRICE;
+  return Math.min(v,cap);
+}
+function answer(q){
+  const Q=parseQuery(q);
+  if(!Q.cats&&!Q.names) return {html:`No entendí qué buscas. Prueba con un rubro o un comercio: <b>bencina</b>, <b>comer</b>, <b>café</b>, <b>cine</b>, <b>farmacia</b>, <b>viajes</b> o un nombre como <b>Starbucks</b>.`};
+  const inNames=it=>Q.names&&Q.names.has(it[0]);
+  const inTopic=it=>Q.cats&&Q.cats.includes(it[1])&&(!Q.only||Q.only.test(norm(it[0])));
+  const both=Q.names&&Q.cats&&DATA.some(it=>inNames(it)&&inTopic(it));
+  const matchRow=it=>both?(inNames(it)&&inTopic(it)):Q.cats?inTopic(it):inNames(it);
+  const cardsOk=k=>[...k].some(c=>(Q.cards||state.cards).includes(c));
+  const days=Q.days||[1,2,3,4,5,6,7];
+  const picks=new Map();
+  for(const wd of days){
+    const dn=dateFor(wd,now), z=Q.zone||activeZone(wd);
+    for(const it of DATA){
+      const [n,c,p,d,k,,, ,from,to]=it;
+      if(!matchRow(it)) continue;
+      if(!cardsOk(k)) continue;
+      if(!(d.includes(0)||d.includes(wd))) continue;
+      if(from&&(dn<from||dn>to)) continue;
+      const iz=zoneOf(it); if(z!=='all'&&iz!=='any'&&iz!==z) continue;
+      const key=n+'|'+p+'|'+k;
+      const every=d.includes(0);
+      const prev=picks.get(key);
+      if(!prev) picks.set(key,{it,wd:every&&!Q.days?null:wd,dn,every});
+    }
+  }
+  let list=[...picks.values()];
+  if(!list.length&&!Q._retry&&(Q.days||Q.zone)){
+    const alt=answer.call(null,q.replace(/hoy|manana|mañana|fin de semana|finde|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|en matanzas|en pichilemu|en santiago/gi,' '));
+    if(!alt.empty) return {html:`No hay beneficios de ${Q.label||'eso'} ${Q.zone?'en '+ZONE_NAME[Q.zone]+' ':''}${Q.days?'para '+days.map(d=>DN[d].toLowerCase()).join(' o '):''}. Lo más cercano:`+alt.html};
+  }
+  if(!list.length){
+    const where=Q.zone?` en ${ZONE_NAME[Q.zone]}`:'';
+    return {empty:true,html:`No encontré beneficios de ${Q.label||'eso'}${where} para ${Q.days?days.map(d=>DN[d].toLowerCase()).join(' o '):'esta semana'} con las tarjetas que tienes encendidas.`};
+  }
+  const isFuel=Q.cats&&Q.cats.includes(B)&&!Q.names||list.every(x=>x.it[1]===B);
+  const score=x=>isFuel?fuelValue(x.it,Q.liters):(x.it[2].endsWith('%')?num(x.it[2]):0)+(x.every?0:0.5)-(isLow(x.it)?100:0);
+  list.sort((a,b)=>score(b)-score(a)||(a.dn-b.dn));
+  const top=list.slice(0,3);
+  const line=(x,i)=>{
+    const [n,c,p,,k,tope,loc,note]=x.it;
+    const cash=/cashback/i.test(note||'');
+    const when=x.wd==null?'cualquier día':(x.wd===todayWd?`hoy ${DN[x.wd].toLowerCase()} ${x.dn}`:`el ${DN[x.wd].toLowerCase()} ${x.dn}`);
+    const val=p.includes('/L')?`$${num(p)} por litro`:/^\d+%$/.test(p)?`${p} de ${cash?'cashback':'descuento'}`:p;
+    const sv=saving(p,tope,cash);
+    const cap=sv&&sv.max?`, hasta ${sv.max}`:(p.includes('/L')&&/\d/.test(tope||'')?`, hasta ${tope} por carga`:'');
+    const where=c===R?` (${loc})`:'';
+    const hrs=(c===R||c===F)&&x.wd===todayWd?hoursInfo(n,x.wd):null;
+    const extra=[
+      isFuel?`Con ${Q.liters} litros ahorras cerca de ${clp(fuelValue(x.it,Q.liters))}.`:'',
+      /activa/i.test(note||'')?'Actívalo antes.':'',
+      hrs?hrs.t+'.':''
+    ].filter(Boolean).join(' ');
+    const lead=i===0?'Te conviene':'También';
+    return `<button type="button" class="pick" data-wd="${x.wd??''}" data-cat="${c}"><span class="lead">${lead} ${when}</span> en <b>${n}</b>${where}, ${payWith(k).replace(/^Paga/,'pagando')}: ${val}${cap}.${extra?` <span class="ex">${extra}</span>`:''}</button>`;
+  };
+  const more=list.length-top.length;
+  return {html:top.map(line).join('')+(more>0?`<p class="more">Y ${more} ${more===1?'opción':'opciones'} más en la lista.</p>`:'')+(isFuel?`<p class="more">Estimación con bencina a ~${clp(FUEL_PRICE)} el litro.</p>`:'')};
+}
+// UI
+const CHAT=[];
+function chatAdd(role,html){CHAT.push({role,html});const box=$('chatLog');const m=document.createElement('div');m.className='msg '+role;m.innerHTML=html;box.appendChild(m);box.scrollTop=box.scrollHeight;
+  m.querySelectorAll('.pick').forEach(b=>b.onclick=()=>{const wd=b.dataset.wd;if(wd)state.wd=+wd;const c=b.dataset.cat;state.cat=c===F||c===R?'Todo':c;render();toggleChat(false);window.scrollTo({top:$('best').offsetTop-80,behavior:'smooth'})});}
+function ask(q){q=q.trim();if(!q)return;chatAdd('me',q.replace(/[<>&]/g,s=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[s])));chatAdd('bot',answer(q).html);$('chatIn').value='';}
+function toggleChat(open){$('chat').hidden=!open;$('chatBtn').setAttribute('aria-expanded',open);if(open){if(!CHAT.length)chatAdd('bot','Pregúntame por un rubro, un comercio o un día. Respondo con tus tarjetas encendidas y tu zona.');setTimeout(()=>$('chatIn').focus(),50)}}
+$('chatBtn').onclick=()=>toggleChat($('chat').hidden);
+$('chatX').onclick=()=>toggleChat(false);
+$('chatForm').addEventListener('submit',e=>{e.preventDefault();ask($('chatIn').value)});
+document.querySelectorAll('#chatSug button').forEach(b=>b.onclick=()=>ask(b.textContent));
+
 
 // Ícono de app: el signo del sistema en clave Byrne. Disco base, porción azul = descuento,
 // arco amarillo que mide el ángulo y dos radios blancos. El favicon usa el mejor % del día; el de inicio, 40%.
