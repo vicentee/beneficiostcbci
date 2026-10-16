@@ -378,7 +378,7 @@ const DATA=[
 ['Flores',M,'30%',[3],'CD','Sin tope','Presencial'],
 ['Tessa',M,'15%',[3],'C','Sin tope','Online o presencial'],
 ['La Papelaria',M,'20%',[3],'CD','Sin tope','Online o presencial'],
-['Mamut',M,'40%',[5],'C','$30.000','Presencial'],
+['Mamut',R,'40%',[5],'C','$30.000','Varios locales en Santiago','Restaurant, café y bar. Bci lo publica en Comercios'],
 ['Andesland',M,'30%',[5,6],'C','$30.000','Presencial'],
 ['Cava Morandé',M,'45%',[0],'CD','Sin tope','Online'],
 ['Totto',M,'25%',[0],'CD','Sin tope','Online o presencial','Cupón online TOTTOBCI'],
@@ -553,7 +553,7 @@ const SITE={'Salcobrand.cl':'https://salcobrand.cl','Despegar':'https://www.desp
 const LB='https://www.liderbci.cl/descuentos/';
 const LIDER={'Papa Johns':LB+'papa-johns','Just Burger':LB+'just-burger','Shell':LB+'mi-copiloto','Lider':LB+'6-porciento-de-devolucion-en-lider','Lider en 3 cuotas':LB+'3-cuotas-precio-contado-sin-pie-y-sin-intereses','Rappi':LB+'rappi','Lipigas':LB+'lipigas','Otros comercios':LB+'1-porciento-de-devolucion-en-otros-comercios','Smart Fit':LB+'smart-fit','Cpech':LB+'cpech','Filadd':LB+'descuento-preu-filadd','Kidzania':LB+'kidzania','Flixbus':LB+'flixbus','OK Parking':LB+'ok-parking','Rentcars':LB+'rentcars','JetSMART · Lider':LB+'cyber-jetsmart'};
 // Presencial sin dirección única: Maps busca el local más cercano a ti.
-const MAPQ={'Tarragona':'Tarragona Lider','Buffet Express':'Buffet Express Lider','Unimarc · Alvi · Mayorista 10':'Unimarc','Estacionamiento aeropuerto SCL':'Estacionamiento Aeropuerto Arturo Merino Benítez'};
+const MAPQ={'Mamut':'Mamut Restaurant','Tarragona':'Tarragona Lider','Buffet Express':'Buffet Express Lider','Unimarc · Alvi · Mayorista 10':'Unimarc','Estacionamiento aeropuerto SCL':'Estacionamiento Aeropuerto Arturo Merino Benítez'};
 const UA=navigator.userAgent||'';
 const MCD_APP=/iPhone|iPad|iPod/i.test(UA)?'https://apps.apple.com/cl/app/mcdonalds-ofertas-y-delivery/id1114009187'
   :/Android/i.test(UA)?'https://play.google.com/store/apps/details?id=com.mcdo.mcdonalds':'https://www.mcdonalds.cl';
@@ -568,7 +568,7 @@ function actionsFor(it){
   if(n==="McDonald's"){ out.push(a(MCD_APP,'Ver',"Abrir la app de McDonald's")); return out; }
   if(c===R||c===F){
     if(pct>=25){
-      const q=c===F?n:`${n} ${loc.split(' · ')[0]} Chile`;
+      const q=MAPQ[n]||(c===F?n:`${n} ${loc.split(' · ')[0]} Chile`);
       out.push(a(PID[n]?`${maps(q)}&query_place_id=${PID[n]}`:maps(q),'Ver',`Ver ${n} en el mapa`));
     }
     return out;
@@ -768,7 +768,7 @@ $('srcHol').textContent=MONTH.holidays.length?' ('+MONTH.holidays.join(' y ')+')
 render();
 
 // Auto-actualización de la app instalada (solo en vicentee.github.io): si hay una versión nueva publicada, recarga.
-const BUILD='20261016204500';
+const BUILD='20261016203100';
 function checkUpdate(){
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(h=>{
