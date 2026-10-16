@@ -152,8 +152,7 @@ footer a{color:var(--muted)}
 
 /* Asistente */
 .wrap{padding-bottom:48px}
-@media (max-width:620px){.wrap{padding-right:50px}}
-.chat-btn{position:fixed;right:0;bottom:calc(14vh + env(safe-area-inset-bottom,0px));z-index:20;width:38px;height:44px;border:0;border-radius:2px 0 0 2px;background:var(--accent);color:#fff;cursor:pointer;display:grid;place-items:center;font-family:var(--mono);font-size:1.15rem;font-weight:500;line-height:1}
+.chat-btn{position:fixed;right:0;bottom:calc(14vh + env(safe-area-inset-bottom,0px));z-index:20;width:30px;height:44px;border:0;border-radius:2px 0 0 2px;background:var(--accent);color:#fff;cursor:pointer;display:grid;place-items:center;font-family:var(--mono);font-size:1.15rem;font-weight:500;line-height:1}
 .chat-btn:active{background:var(--ink)}
 .chat-btn:focus-visible{outline:2px solid var(--ink);outline-offset:-4px}
 .chat-btn[aria-expanded="true"]{display:none}
@@ -766,7 +765,7 @@ $('srcHol').textContent=MONTH.holidays.length?' ('+MONTH.holidays.join(' y ')+')
 render();
 
 // Auto-actualización de la app instalada (solo en vicentee.github.io): si hay una versión nueva publicada, recarga.
-const BUILD='20261016203000';
+const BUILD='20261016203500';
 function checkUpdate(){
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(h=>{
