@@ -269,9 +269,9 @@ const DATA=[
 ['La Vermutería del Pobre',R,'20%',[4],'CD','Sin tope','Providencia · Las Condes'],
 ['Vermut',R,'20%',[4],'CD','Sin tope','Providencia'],
 ['Siete Negronis',R,'20%',[4],'CD','Sin tope','Vitacura'],
-['OIA',R,'40%',[5],'C','$40.000','Vitacura'],
+['OIA',R,'20%',[4,5,6],'CD','$20.000','Vitacura'],
 ['Anima Cocktail Lab',R,'40%',[5],'C','$40.000','Providencia (Bellavista)'],
-['Gueros',R,'40%',[5],'C','$40.000','Providencia (Bellavista)'],
+['Gueros',R,'40%',[5],'C','$40.000','Providencia y Ñuñoa'],
 ['Hitomi',R,'40%',[5],'C','$40.000','Providencia'],
 ['Kechua',R,'40%',[5],'C','$40.000','Providencia (Bellavista)'],
 ['Omar Khayyam',R,'40%',[5],'C','$40.000','Recoleta'],
@@ -314,7 +314,7 @@ const DATA=[
 ['Café Meche',R,'20%',[2,3,4,5],'CD','$20.000','Providencia'],
 ['Punto País',R,'20%',[2,3],'CD','$100.000','Ñuñoa'],
 ['Terraza Ibiza',R,'20%',[2,3],'CD','$20.000','Peñaflor'],
-['Vertigo',R,'20%',[4,5,6],'CD','$20.000','Vitacura'],
+['Vertigo',R,'20%',[4],'CD','Sin tope','Vitacura'],
 ['Misoya',R,'20%',[1,2],'CD','$20.000','Recoleta · Las Condes · Maipú'],
 ['Sangucherías Gorilas',R,'20%',[1,2],'CD','$30.000','Las Condes · San Miguel'],
 // Café y comida rápida
@@ -372,7 +372,7 @@ const DATA=[
 ['Cinépolis',P,'20%',[0],'C','Sin tope','Presencial','Combo Bci: Box Pop + 2 bebidas medianas'],
 ['Mall Sport',P,'30%',[3],'CD','Sin tope','Presencial','Hasta 30% en entretención'],
 ['Teatro Zoco',P,'30%',[0],'C','Sin tope','Online','Entradas'],
-['Teatro San Ginés',P,'20%',[0],'CD','Sin tope','Presencial','Café Bar'],
+['Teatro San Ginés',P,'30%',[0],'CD','Sin tope','Online o presencial','En entradas. También 20% en el Café Bar'],
 ['Teatro Municipal de Las Condes',P,'30%',[0],'CD','—','Online o presencial','Entradas'],
 ['Viña Encierra',P,'30%',[5],'CD','Sin tope','Online o presencial','Tours (excluye almuerzo y picnic). Cupón ENCIERRA30'],
 // Lider Bci (tarjeta de crédito Lider Bci), octubre 2026. Condiciones revisadas una por una en liderbci.cl/descuentos
@@ -425,7 +425,7 @@ const DS=['','Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 const CATS=['Todo',R,F,S,B,H,M,P,V];
 
 // MES VIGENTE: lo único que cambia la actualización mensual además de los datos.
-const MONTH={y:2026,m:10,name:'Octubre',holidays:[12,31],catalog:'https://cdn3.bci.cl/uploads/ef62c6b1-4c59-4aaa-b5f4-e92f32631b9d/original/Cata_logo_de_beneficios_Bci_Oct26.pdf',updated:'2026-10-09'};
+const MONTH={y:2026,m:10,name:'Octubre',holidays:[12,31],catalog:'https://cdn3.bci.cl/uploads/ef62c6b1-4c59-4aaa-b5f4-e92f32631b9d/original/Cata_logo_de_beneficios_Bci_Oct26.pdf',updated:'2026-10-16'};
 const DIM=new Date(MONTH.y,MONTH.m,0).getDate();
 function dateFor(wd,ref){ // próxima fecha del mes vigente (desde hoy) para ese día de semana
   const base=ref.getMonth()===MONTH.m-1&&ref.getFullYear()===MONTH.y?ref.getDate():1;
@@ -737,7 +737,7 @@ $('srcHol').textContent=MONTH.holidays.length?' ('+MONTH.holidays.join(' y ')+')
 render();
 
 // Auto-actualización de la app instalada (solo en vicentee.github.io): si hay una versión nueva publicada, recarga.
-const BUILD='20261009103203';
+const BUILD='20261016100000';
 function checkUpdate(){
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(h=>{
