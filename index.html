@@ -547,7 +547,8 @@ function render(){
 const PANO={'Kidzania':'https://www.liderbci.cl/descuentos/kidzania','Cinépolis':'https://www.cinepolischile.cl','Mall Sport':'https://www.mallsport.cl','Teatro Zoco':'https://www.teatrozoco.cl','Teatro San Ginés':'https://www.sangines.cl','Teatro Municipal de Las Condes':'https://www.tmlascondes.cl','Viña Encierra':'https://www.encierra.cl'};
 // Sitios oficiales verificados el 09-10-2026. Lo que no está aquí no se pudo confirmar y usa "Buscar".
 const SITE={'Salcobrand.cl':'https://salcobrand.cl','Despegar':'https://www.despegar.cl','PedidosYa Market':'https://www.pedidosya.cl','PedidosYa Plus':'https://www.pedidosya.cl','JetSMART':'https://jetsmart.com/cl/es/','Viña Encierra':'https://www.encierra.cl',"McDonald's":'https://www.mcdonalds.cl',
-'Cava Morandé':'https://www.cavamorande.cl','Totto':'https://cl.totto.com/','Mizos':'https://www.mizos.cl','Natura':'https://www.natura.cl','Tribus Home':'https://www.tribushome.cl','Tribus Rugs':'https://www.tribusrugs.cl','Zig Zag':'https://www.zigzag.cl','Vitaminlife Salco':'https://salcobrand.cl','Paula Benítez':'https://www.paulabenitez.cl','Green Glass':'https://www.greenglass.cl','Bebesit':'https://www.bebesit.cl','Canadienne':'https://www.canadienne.cl','Trial':'https://www.trial.cl','Karun':'https://www.anteojoskarun.cl','Rosalinda':'https://www.rosalinda.cl','Avis · Budget':'https://www.avis.cl','Accor':'https://all.accor.com','E-Mobility':'https://www.e-mobility.cl','Tessa':'https://www.tessachile.com/','Kafi Body':'https://kafibody.com/'};
+'Cava Morandé':'https://www.cavamorande.cl','Totto':'https://cl.totto.com/','Mizos':'https://www.mizos.cl','Natura':'https://www.natura.cl','Tribus Home':'https://www.tribushome.cl','Tribus Rugs':'https://www.tribusrugs.cl','Zig Zag':'https://www.zigzag.cl','Vitaminlife Salco':'https://salcobrand.cl','Paula Benítez':'https://www.paulabenitez.cl','Green Glass':'https://www.greenglass.cl','Bebesit':'https://www.bebesit.cl','Canadienne':'https://www.canadienne.cl','Trial':'https://www.trial.cl','Karun':'https://www.anteojoskarun.cl','Rosalinda':'https://www.rosalinda.cl','Avis · Budget':'https://www.avis.cl','Accor':'https://all.accor.com','E-Mobility':'https://www.e-mobility.cl','Tessa':'https://www.tessachile.com/','Kafi Body':'https://kafibody.com/',
+'Flores':'https://www.tiendaflores.cl','Mamut':'https://www.mamutrestaurante.cl','Andesland':'https://andeslandoutdoor.cl','Yukids':'https://www.yukids.cl','Simplit':'https://simplithome.cl','Extra Life':'https://extra-life.cl','La Papelaria':'https://www.papelaria.cl','Puppies & Kittens':'https://pyk.cl','Cpech':'https://www.cpech.cl','Otros comercios':'https://www.liderbci.cl/descuentos/1-porciento-de-devolucion-en-otros-comercios'};
 // Ficha oficial de cada beneficio Lider Bci (condiciones y cómo canjear).
 const LB='https://www.liderbci.cl/descuentos/';
 const LIDER={'Papa Johns':LB+'papa-johns','Just Burger':LB+'just-burger','Shell':LB+'mi-copiloto','Lider':LB+'6-porciento-de-devolucion-en-lider','Lider en 3 cuotas':LB+'3-cuotas-precio-contado-sin-pie-y-sin-intereses','Rappi':LB+'rappi','Lipigas':LB+'lipigas','Otros comercios':LB+'1-porciento-de-devolucion-en-otros-comercios','Smart Fit':LB+'smart-fit','Cpech':LB+'cpech','Filadd':LB+'descuento-preu-filadd','Kidzania':LB+'kidzania','Flixbus':LB+'flixbus','OK Parking':LB+'ok-parking','Rentcars':LB+'rentcars','JetSMART · Lider':LB+'cyber-jetsmart'};
@@ -577,6 +578,8 @@ function actionsFor(it){
     const lider=/liderbci/i.test(note);
     out.push(a(lider?(LIDER[n]||'https://www.liderbci.cl/descuentos'):'https://www.bciplus.cl/personas','Activar',`Activar ${n} en ${lider?'Lider Bci':'BciPlus+'}`)); return out;
   }
+  // Compras: siempre el sitio de la tienda, nunca el mapa
+  if(c===M&&SITE[n]){ out.push(a(SITE[n],'Ver',`Ver sitio de ${n}`)); return out; }
   if(it[4]==='L'&&!SITE[n]&&LIDER[n]&&!/presencial/i.test(loc||'')){ out.push(a(LIDER[n],'Ver',`Ver condiciones de ${n} en Lider Bci`)); return out; }
   const ch=loc||'';
   if(/online/i.test(ch)){
@@ -765,7 +768,7 @@ $('srcHol').textContent=MONTH.holidays.length?' ('+MONTH.holidays.join(' y ')+')
 render();
 
 // Auto-actualización de la app instalada (solo en vicentee.github.io): si hay una versión nueva publicada, recarga.
-const BUILD='20261016203500';
+const BUILD='20261016204500';
 function checkUpdate(){
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(h=>{
