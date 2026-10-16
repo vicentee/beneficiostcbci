@@ -190,6 +190,30 @@ footer a{color:var(--muted)}
 .chat input{flex:1;min-width:0;border:1px solid var(--ink);background:var(--surface);color:var(--ink);border-radius:3px;padding:10px 12px;font:inherit;font-size:16px}
 .chat form button{border:0;background:var(--ink);color:var(--bg);border-radius:3px;padding:0 14px;font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .chat input:focus-visible,.chat button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Buscador */
+.find{margin-top:14px;position:relative}
+.find input{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:3px;padding:11px 38px 11px 12px;font-family:var(--sans);font-size:16px;line-height:1.2;-webkit-appearance:none;appearance:none}
+.find input::placeholder{color:var(--faint)}
+.find input:focus{outline:none;border-color:var(--ink)}
+.find input::-webkit-search-cancel-button{display:none}
+.find .x{position:absolute;right:2px;top:2px;width:36px;height:38px;border:0;background:none;color:var(--muted);font-size:1.3rem;line-height:1;cursor:pointer}
+.find .x:focus-visible{outline:2px solid var(--accent);outline-offset:-4px}
+.sr{margin-top:6px;border-top:1px solid var(--line)}
+.sr:empty{display:none;border:0}
+.sr button{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:11px 0;color:var(--ink);cursor:pointer;font:inherit}
+.sr button:active,.sr button.on{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.sr button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.sr .p{font-family:var(--mono);font-size:.95rem;font-weight:500;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr .p.hi{color:var(--accent)}
+.sr .n{font-weight:500;display:block}
+.sr .m{display:block;font-size:.76rem;color:var(--muted);margin-top:1px}
+.sr .d{font-family:var(--mono);font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.sr .cat .p{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.sr .none{padding:12px 0;font-size:.85rem;color:var(--muted);border-bottom:1px solid var(--line)}
+.sr .ask .p{color:var(--accent);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase}
+li.flash{animation:flash 2.6s ease-out}
+@keyframes flash{0%,35%{background:color-mix(in srgb,var(--accent) 16%,transparent);box-shadow:0 0 0 8px color-mix(in srgb,var(--accent) 16%,transparent)}100%{background:transparent;box-shadow:0 0 0 8px transparent}}
 </style>
 </head>
 <body>
@@ -213,6 +237,11 @@ footer a{color:var(--muted)}
   </div>
   <div class="cards" id="cards" role="group" aria-label="Tarjetas que llevas"></div>
   <div class="chips" id="chips" role="toolbar" aria-label="Categoría"></div>
+  <div class="find" role="search">
+    <input id="q" type="search" placeholder="Buscar: Copec, cine, sushi, café…" aria-label="Buscar comercio o rubro" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
+    <button type="button" class="x" id="qx" aria-label="Borrar búsqueda" hidden>×</button>
+    <div class="sr" id="sr" role="listbox" aria-label="Resultados"></div>
+  </div>
   <section class="best" id="best" aria-label="Sugerencias del día"></section>
   <div id="list"></div>
   <footer>
@@ -703,7 +732,7 @@ function li(it,compact){
   const cash=/cashback/i.test(note||'')||c===B;
   const sv=saving(p,tope,cash);
   if(compact){
-    return `<li class="mini"><div class="pct">${p}</div><div class="info"><span class="name">${n}</span> <span class="meta-inline">${[loc,days.includes(0)?'todos los días':multi,sv&&sv.max?'hasta '+sv.max:''].filter(Boolean).join(' · ')}</span></div></li>`;
+    return `<li class="mini" data-i="${DATA.indexOf(it)}"><div class="pct">${p}</div><div class="info"><span class="name">${n}</span> <span class="meta-inline">${[loc,days.includes(0)?'todos los días':multi,sv&&sv.max?'hasta '+sv.max:''].filter(Boolean).join(' · ')}</span></div></li>`;
   }
   const hi=num(p)>=40&&p.includes('%');
   const line1=payWith(k);
@@ -712,7 +741,7 @@ function li(it,compact){
   const noteHtml=note?(/activa|solo del/i.test(note)?`<span class="caveat">${note}</span>`:note):'';
   const lk=linkOf(it);
   const btn=lk&&lk.activar?`<div class="acts">${lk.html}</div>`:'';
-  return `<li class="${[btn?'has-btn':'',lk&&!lk.activar?'tap':''].join(' ').trim()}"><div class="pct${hi?' hi':''}${p.length>5?' long':''}">${p.endsWith('%')?wedge(p,hi):''}${p}${cash?`<small>cashback</small>`:''}${sv?(sv.max?`<small>hasta ${sv.max}</small><small class="bill">con ${sv.bill}</small>`:`<small>${sv}</small>`):''}</div><div class="info"><div class="name">${nameHtml(n,lk)}</div><div class="meta">${line1}</div>${line2?`<div class="meta">${line2}</div>`:''}${hrs?`<div class="meta">${hrs}</div>`:''}${noteHtml?`<div class="meta">${noteHtml}</div>`:''}</div>${btn}</li>`;
+  return `<li class="${[btn?'has-btn':'',lk&&!lk.activar?'tap':''].join(' ').trim()}" data-i="${DATA.indexOf(it)}"><div class="pct${hi?' hi':''}${p.length>5?' long':''}">${p.endsWith('%')?wedge(p,hi):''}${p}${cash?`<small>cashback</small>`:''}${sv?(sv.max?`<small>hasta ${sv.max}</small><small class="bill">con ${sv.bill}</small>`:`<small>${sv}</small>`):''}</div><div class="info"><div class="name">${nameHtml(n,lk)}</div><div class="meta">${line1}</div>${line2?`<div class="meta">${line2}</div>`:''}${hrs?`<div class="meta">${hrs}</div>`:''}${noteHtml?`<div class="meta">${noteHtml}</div>`:''}</div>${btn}</li>`;
 }
 function tick(){const d=new Date();$('clock').textContent=d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit',hour12:false})}
 tick();setInterval(()=>{tick();if(state.wd===todayWd)render()},60000);
@@ -737,7 +766,7 @@ $('srcHol').textContent=MONTH.holidays.length?' ('+MONTH.holidays.join(' y ')+')
 render();
 
 // Auto-actualización de la app instalada (solo en vicentee.github.io): si hay una versión nueva publicada, recarga.
-const BUILD='20261016100000';
+const BUILD='20261016203000';
 function checkUpdate(){
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(h=>{
@@ -955,6 +984,104 @@ $('chatScrim').onclick=()=>toggleChat(false);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('chat').hidden)toggleChat(false)});
 $('chatForm').addEventListener('submit',e=>{e.preventDefault();ask($('chatIn').value)});
 document.querySelectorAll('#chatSug button').forEach(b=>b.onclick=()=>ask(b.textContent));
+// ---------- Buscador: comercio, rubro o palabra clave ----------
+const nz=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9ñ ]/g,' ').replace(/\s+/g,' ').trim();
+// Palabras que llevan a una categoría. "main" = el nombre del rubro (va primero); "alt" = sinónimos (van después de los comercios).
+const CAT_WORDS=[
+  [R,['restaurant','restaurante','restaurantes','restoran','restobar'],['comer','comida','almuerzo','almorzar','cena','cenar','sushi','ramen','pizza','hamburguesa','burger','bar','tragos','carne','parrilla','peruano','nikkei']],
+  [F,['cafe','cafes','cafeteria','cafeterias','comida rapida'],['rapida','fast food','starbucks','completos','helado']],
+  [S,['super','supermercado','supermercados'],['mercado','delivery','despacho','gas']],
+  [B,['bencina','bencinas','bencinera','combustible'],['gasolina','nafta','diesel','petroleo','auto']],
+  [H,['salud','farmacia','farmacias'],['clinica','gimnasio','gym','dentista','doctor','vitaminas']],
+  [M,['compras','tienda','tiendas'],['ropa','vino','vinos','regalo','libros','hogar','mascotas']],
+  [P,['panorama','panoramas','entretencion'],['cine','teatro','niños','ninos','show']],
+  [V,['viaje','viajes','vuelo','vuelos'],['hotel','hoteles','arriendo','rent a car','bus','pasajes','estacionamiento']],
+];
+function catHits(q){
+  const out=[];
+  for(const [c,main,alt] of CAT_WORDS){
+    const lbl=nz(CAT_SHORT[c]);
+    const hit=w=>w===q||(q.length>=3&&w.startsWith(q))||(q.length>=4&&q.startsWith(w));
+    if(main.some(hit)||hit(lbl)) out.push({c,strong:true});
+    else if(alt.some(hit)) out.push({c,strong:false});
+  }
+  return out;
+}
+function itemScore(it,q){
+  const n=nz(it[0]), words=n.split(' '), toks=q.split(' ');
+  if(n===q) return 120;
+  if(n.startsWith(q)) return 100;
+  if(words.some(w=>w.startsWith(q))) return 85;
+  if(q.length>=3&&n.replace(/ /g,'').includes(q.replace(/ /g,''))) return 70;
+  const hay=nz([it[0],it[6],it[7]].join(' '));
+  if(q.length>=4&&toks.every(t=>hay.includes(t))) return 40;
+  return 0;
+}
+// Próximo día (desde hoy, dentro de la semana visible) en que aplica el beneficio, sin mirar zona.
+function nextDay(it){
+  for(let o=0;o<7;o++){
+    const w=((todayWd-1+o)%7)+1, dn=dateFor(w,now);
+    const [, , , days, , , , , from, to]=it;
+    if(!(days.includes(0)||days.includes(w))) continue;
+    if(from&&(dn<from||dn>to)) continue;
+    return {w,dn};
+  }
+  return null;
+}
+const cardsOn=it=>[...it[4]].some(c=>state.cards.includes(c));
+const cardName=c=>(CARDS.find(x=>x[0]===c)||[,''])[1];
+let SR=[];
+function search(raw){
+  const q=nz(raw);
+  $('qx').hidden=!raw;
+  if(q.length<2){SR=[];$('sr').innerHTML='';return}
+  const cats=catHits(q);
+  const items=DATA.map((it,i)=>({it,i,s:itemScore(it,q)})).filter(x=>x.s>0)
+    .sort((a,b)=>b.s-a.s||cardsOn(b.it)-cardsOn(a.it)||num(b.it[2])-num(a.it[2])).slice(0,8);
+  const count=c=>DATA.filter(it=>it[1]===c&&cardsOn(it)).length;
+  const catRow=c=>({type:'cat',c});
+  SR=[...cats.filter(x=>x.strong).map(x=>catRow(x.c)),...items.map(x=>({type:'it',...x})),...cats.filter(x=>!x.strong).map(x=>catRow(x.c))];
+  // Si hay rubro fuerte y comercios que solo calzan por nota/comuna, el rubro manda.
+  const esc=s=>s.replace(/[<>&"]/g,ch=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[ch]));
+  const rows=SR.map((r,ix)=>{
+    if(r.type==='cat') return `<button type="button" class="cat" data-ix="${ix}" role="option"><span class="p">Rubro</span><span><span class="n">${CAT_SHORT[r.c]}</span><span class="m">${count(r.c)} beneficios este mes · ver la categoría</span></span><span class="d">→</span></button>`;
+    const it=r.it, [n,c,p,days,k,,loc]=it, nd=nextDay(it), on=cardsOn(it);
+    const when=days.includes(0)?'Todos los días':days.map(d=>DS[d]).join(' ');
+    const pay=on?payWith(k).replace(/^Paga con /,''):'Enciende '+cardName(k[0]);
+    const tag=nd?(nd.w===todayWd?'Hoy':DS[nd.w]+' '+nd.dn):'—';
+    return `<button type="button" data-ix="${ix}" role="option"><span class="p${num(p)>=40&&p.includes('%')?' hi':''}">${esc(p)}</span><span><span class="n">${esc(n)}</span><span class="m">${[CAT_SHORT[c],when,loc,pay].filter(Boolean).map(esc).join(' · ')}</span></span><span class="d">${tag}</span></button>`;
+  });
+  rows.push(`<button type="button" class="ask" data-ix="ask" role="option"><span class="p">?</span><span><span class="n">Preguntarle al asistente</span><span class="m">“${esc(raw.trim())}”</span></span><span class="d">→</span></button>`);
+  $('sr').innerHTML=(SR.length?'':`<p class="none">Nada con “${esc(raw.trim())}”. Prueba con un rubro: café, bencina, cine, sushi.</p>`)+rows.join('');
+  $('sr').querySelectorAll('button').forEach(b=>b.onclick=()=>pick(b.dataset.ix));
+}
+function clearSearch(){$('q').value='';search('');$('q').blur()}
+function scrollToEl(el){
+  const off=$('days').getBoundingClientRect().bottom+18;
+  window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-off,behavior:'smooth'});
+}
+function pick(ix){
+  if(ix==='ask'){const q=$('q').value.trim();clearSearch();toggleChat(true);ask(q);return}
+  const r=SR[+ix]; if(!r) return;
+  clearSearch();
+  if(r.type==='cat'){state.cat=r.c;save();render();scrollToEl($('chips'));return}
+  const it=r.it;
+  if(!cardsOn(it)){state.cards=CARDS.map(x=>x[0]).filter(x=>state.cards.includes(x)||x===it[4][0]).join('');}
+  const nd=nextDay(it);
+  if(nd) state.wd=nd.w;
+  state.cat=it[1]; save(); render();
+  const el=document.querySelector(`#list li[data-i="${r.i}"]`);
+  if(!el){scrollToEl($('chips'));return}
+  const d=el.closest('details'); if(d) d.open=true;
+  requestAnimationFrame(()=>{scrollToEl(el);el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')});
+}
+$('q').addEventListener('input',e=>search(e.target.value));
+$('q').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault(); if(SR.length) pick(0); else if($('q').value.trim()) pick('ask');}
+  if(e.key==='Escape') clearSearch();
+});
+$('qx').onclick=()=>{clearSearch();$('q').focus()};
+
 
 
 // Ícono de app: el signo del sistema en clave Byrne. Disco base, porción azul = descuento,
