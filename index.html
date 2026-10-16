@@ -152,7 +152,7 @@ footer a{color:var(--muted)}
 
 /* Asistente */
 .wrap{padding-bottom:48px}
-.chat-btn{position:fixed;right:0;bottom:calc(14vh + env(safe-area-inset-bottom,0px));z-index:20;width:30px;height:44px;border:0;border-radius:2px 0 0 2px;background:var(--accent);color:#fff;cursor:pointer;display:grid;place-items:center;font-family:var(--mono);font-size:1.15rem;font-weight:500;line-height:1}
+.chat-btn{position:fixed;right:0;bottom:calc(14vh + env(safe-area-inset-bottom,0px));z-index:20;width:22px;height:48px;border:0;border-radius:2px 0 0 2px;background:var(--accent);color:#fff;cursor:pointer;display:grid;place-items:center;font-family:var(--mono);font-size:1rem;font-weight:500;line-height:1}
 .chat-btn:active{background:var(--ink)}
 .chat-btn:focus-visible{outline:2px solid var(--ink);outline-offset:-4px}
 .chat-btn[aria-expanded="true"]{display:none}
@@ -189,6 +189,12 @@ footer a{color:var(--muted)}
 .chat input{flex:1;min-width:0;border:1px solid var(--ink);background:var(--surface);color:var(--ink);border-radius:3px;padding:10px 12px;font:inherit;font-size:16px}
 .chat form button{border:0;background:var(--ink);color:var(--bg);border-radius:3px;padding:0 14px;font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .chat input:focus-visible,.chat button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Ubicación */
+.locline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 0 0;font-family:var(--mono);font-size:.66rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.locline button{border:0;background:none;padding:4px 0;color:var(--accent);font:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;white-space:nowrap}
+.locline button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dist{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:500}
 
 /* Buscador */
 .find{margin-top:14px;position:relative}
@@ -234,6 +240,7 @@ li.flash{animation:flash 2.6s ease-out}
     <div class="where" id="where" role="group" aria-label="Dónde estás"></div>
 
   </div>
+  <p class="locline" id="loc" hidden></p>
   <div class="cards" id="cards" role="group" aria-label="Tarjetas que llevas"></div>
   <div class="chips" id="chips" role="toolbar" aria-label="Categoría"></div>
   <div class="find" role="search">
@@ -445,7 +452,28 @@ function zoneOf(it){
   if(it[1]===P) return it[0]==='Viña Encierra'?'lit':'stgo';
   return STGO_CHAINS.has(it[0])&&!/online/i.test(it[6])?'stgo':'any';
 }
-const ZONES=[['auto','Auto','Santiago lun a mié, Matanzas jue a dom'],['stgo','Stgo','Santiago'],['lit','Matanzas','Matanzas y alrededores'],['all','Todo','Sin filtro de zona']];
+const ZONES=[['auto','Cerca','Según tu ubicación. Sin ubicación: Santiago lun a mié, Matanzas jue a dom'],['stgo','Stgo','Santiago'],['lit','Matanzas','Matanzas y alrededores'],['all','Todo','Sin filtro de zona']];
+// ---------- Ubicación: zona automática y distancias (solo en el teléfono, no se envía a ningún lado) ----------
+// Coordenadas de lugares con local fijo (Google Maps, oct 2026). Varios locales = varias coordenadas.
+const GEO={"Danés Bar & Restaurant":[[-33.423482,-70.578181]],"La Fabbrica":[[-33.452014,-70.570367],[-33.352185,-70.520025]],"Tigre Bravo":[[-33.481773,-70.75192]],"Lumière Bistró":[[-33.41243,-70.578711]],"Barra de Pickles":[[-33.453114,-70.62786]],"Kleine Kneipe":[[-33.452934,-70.612482],[-33.454354,-70.579909]],"La Casa Vieja":[[-33.384984,-70.55377]],"Lin Lan":[[-33.418449,-70.554107]],"Momiji Ramen":[[-33.4324,-70.64209]],"Calle y Barrio":[[-33.431882,-70.620792]],"Inari Sushi":[[-33.481992,-70.649761]],"PastaMore":[[-33.386139,-70.552801]],"Santa Hamburguesa":[[-33.427952,-70.62079]],"Danubio Azul":[[-33.415588,-70.596499]],"Diksabaa Shawarmas":[[-33.483434,-70.534116]],"La Chimba":[[-33.431506,-70.634752]],"Lao Lao Foods":[[-33.427357,-70.60316]],"The Bistró":[[-33.400276,-70.575395]],"Bar Italia":[[-33.447639,-70.624867]],"Los Vikingos":[[-33.442989,-70.66816]],"Ocean Pacific's":[[-33.441832,-70.668009]],"Raffaella":[[-33.406314,-70.561225]],"Misky Mikuy":[[-33.438099,-70.560913]],"Tres Valles":[[-33.439136,-70.641295]],"Casa Vitalis":[[-33.385637,-70.555655]],"AC Kitchen":[[-33.418111,-70.605614]],"Caoba Bar":[[-33.40265,-70.590132]],"Entre Cavas y Ladrillos":[[-33.482254,-70.649812]],"Guachita Culebra":[[-33.42672,-70.619797]],"Restobar Bravos":[[-33.483434,-70.534116]],"Tera Restoran":[[-33.421925,-70.605244]],"Hijo del Inca":[[-33.438467,-70.559536]],"OIA":[[-33.397282,-70.597966]],"Gueros":[[-33.431331,-70.634523],[-33.453802,-70.59391]],"Hitomi":[[-33.424181,-70.594192]],"Anima Cocktail Lab":[[-33.432357,-70.635077]],"Kechua":[[-33.433623,-70.634753]],"Omar Khayyam":[[-33.425881,-70.640042]],"Wayna":[[-33.541397,-70.570349]],"Al Pesto":[[-33.284597,-70.680216]],"El Club del Ramen":[[-33.389293,-70.61811]],"Oporto":[[-33.414451,-70.594039]],"Rugendas":[[-33.419191,-70.596386]],"Soho Thai":[[-33.389857,-70.540413]],"The Greens":[[-33.41473,-70.597762],[-33.411629,-70.579805]],"Kanpai":[[-34.385197,-72.017317]],"Vino Bello":[[-34.627705,-71.374242]],"Bocas del Mar":[[-34.384936,-72.011924]],"Guayaquil Fusión":[[-33.40594,-70.569845]],"Bar La Trova":[[-33.442803,-70.673032]],"De Barrio":[[-33.448093,-70.624453]],"La Santoría":[[-33.432159,-70.61795]],"Impasto Restobar":[[-33.438147,-70.614261]],"Bar Porfirio":[[-33.434615,-70.616895]],"Expendio":[[-33.434776,-70.616825]],"Zía Bistró & Café":[[-33.351979,-70.512112]],"Sabor y Aroma":[[-33.365392,-70.515635]],"China 365":[[-33.351749,-70.513236]],"Marliz Café":[[-33.382111,-70.546112]],"Zulu Kitchen & Bar":[[-33.401542,-70.594338]],"Club Gordos":[[-33.422895,-70.612456]],"Kantu Thai":[[-33.447183,-70.625132]],"My Hero's Café":[[-33.421412,-70.60967]],"Moscowa Restobar":[[-33.445974,-70.626262]],"Café Meche":[[-33.434792,-70.605208]],"Punto País":[[-33.449231,-70.596569]],"Terraza Ibiza":[[-33.598358,-70.891435]],"Vertigo":[[-33.380657,-70.542216]],"Antonella Bar":[[-33.382369,-70.547115]],"Da Radda":[[-33.410928,-70.579104]],"Mall Sport":[[-33.370609,-70.506775]],"Teatro Zoco":[[-33.358419,-70.517503]],"Teatro San Ginés":[[-33.432646,-70.633624]],"Teatro Municipal de Las Condes":[[-33.416165,-70.595657]],"Viña Encierra":[[-34.482581,-71.502204]],"Kidzania":[[-33.403446,-70.575186]],"El Café Rosa":[[-33.38679,-70.56409]],"Roof Burger":[[-33.386793,-70.564105],[-33.303733,-70.69617],[-33.49117,-70.540136]],"Fast Not Junk":[[-33.427469,-70.618657],[-33.406249,-70.574298]],"GRDS":[[-33.431103,-70.615793],[-33.420313,-70.605572],[-33.542976,-70.569694]],"Misoya":[[-33.430194,-70.643637]],"Sangucherías Gorilas":[[-33.418503,-70.553914],[-33.499574,-70.654352]]};
+const HOME_PTS={stgo:[-33.4372,-70.6343],lit:[-33.9600,-71.8740]};
+let LOC=null, LOC_STATUS='idle'; // idle | asking | ok | denied | error
+function haversine(a,b){const R=6371,r=Math.PI/180,dLa=(b[0]-a[0])*r,dLo=(b[1]-a[1])*r,s=Math.sin(dLa/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(s))}
+function gpsZone(){
+  if(!LOC) return null;
+  const p=[LOC.lat,LOC.lng];
+  if(haversine(p,HOME_PTS.stgo)<50) return 'stgo';
+  if(haversine(p,HOME_PTS.lit)<110) return 'lit';
+  return 'all';
+}
+const usingGps=wd=>state.where==='auto'&&!!LOC&&wd===todayWd;
+function distKm(it){
+  if(!LOC) return null;
+  const pts=GEO[it[0]]; if(!pts) return null;
+  return Math.min(...pts.map(p=>haversine([LOC.lat,LOC.lng],p)));
+}
+function fmtKm(d){return d<1?`a ${Math.max(50,Math.round(d*1000/50)*50)} m`:d<10?`a ${d.toFixed(1).replace('.',',')} km`:`a ${Math.round(d)} km`}
+const nearBy=(a,b)=>(distKm(a)??1e9)-(distKm(b)??1e9);
 // Ficha exacta en Google Maps para restaurantes de 25% o más
 const PID={'Danés Bar & Restaurant':'ChIJk96hyhzPYpYR-9UONd0C7XQ','La Fabbrica':'ChIJXR2F_CjLYpYRljg81xsBxXU','Tigre Bravo':'ChIJHzYpOwDDYpYRytnwo6k1Ma8','Barra de Pickles':'ChIJpcDayrXFYpYRSwLoCNTx-vE','Kleine Kneipe':'ChIJMzHAq4_PYpYRqWKg2ifhJd8','La Casa Vieja':'ChIJR0J78TTJYpYRLE2NVQ9_J3s','Lin Lan':'ChIJ9fVJme3OYpYRfcSNwN0BCuE','Momiji Ramen':'ChIJZaZBj9HFYpYRq35pbCyyt8I','Calle y Barrio':'ChIJA72i-rvPYpYRCSb3-4YVTMU','Bar Italia':'ChIJtaoBLXzFYpYRPnjo8EZ_v-g','Danubio Azul':'ChIJN5eDYBXPYpYRUybyuV1Bawg','Diksabaa Shawarmas':'ChIJu19hW7vRYpYRogs20hx2j7c','La Chimba':'ChIJ17T7NgDFYpYRvdW6kiLf524','Lao Lao Foods':'ChIJLWB-9sjPYpYRFchL8FEWJlo','Los Vikingos':'ChIJF0TGo6zFYpYR2yB9TR0pCVg',"Ocean Pacific's":'ChIJI-CYvazFYpYR1FHgot_Sew4','Raffaella':'ChIJ22qudPXPYpYR7PjyA6N4sDI','Misky Mikuy':'ChIJExXBbVrOYpYR6ihei01hD6c','Tres Valles':'ChIJSU1hb_jFYpYRAKLjkb0sqW4','AC Kitchen':'ChIJwbCVvmnPYpYRTvkmmVrUYY8','Caoba Bar':'ChIJgXNai-zPYpYR8PqwRjD1anc','Entre Cavas y Ladrillos':'ChIJ1XTIJBfFYpYRyANzwd8sXUc','Guachita Culebra':'ChIJNUyPthrPYpYRmIkK0gMmdiA','Restobar Bravos':'ChIJCahX__XRYpYRNGaCQvbI5_4','Tera Restoran':'ChIJweVOP2DPYpYRlxnQgsOgtP4','Hijo del Inca':'ChIJ5zok3DbPYpYR9tjwaaXvaXY','OIA':'ChIJM7t_AQDPYpYRxINrCr7lyhM','Anima Cocktail Lab':'ChIJUeCHHADFYpYR3R8ICf8-e0k','Gueros':'ChIJPS9CIMPFYpYR0URtBX8XNk8','Hitomi':'ChIJzcFYcQXPYpYRgYkmAUphgLM','Kechua':'ChIJQdhPVPzFYpYRUIsJLmCzc-U','Omar Khayyam':'ChIJf9deepTFYpYR8oL1_wqzwnA','The Greens':'ChIJ26n59T_PYpYRg07WlVFNAhE','Wayna':'ChIJrSIFWUHRYpYRjMz9mwvpYHY','Al Pesto':'ChIJaS9CN_u4YpYRAxIvVzinak8','El Club del Ramen':'ChIJb_p0Q1TJYpYRarqheOsJ_mQ','Oporto':'ChIJeWjuOj7PYpYRnqxGj6ynhI0','Rugendas':'ChIJBbQv6BTPYpYR4SAU4QzpqSQ','Soho Thai':'ChIJnTMmJP7PYpYR_UEeLlhDojc','The Bistró':'ChIJo_OJFCjPYpYRi_rIBt4Bcnk','De Barrio':'ChIJAS8yjyPFYpYR9CY2GatO1Lo','La Santoría':'ChIJxaT0MnrPYpYR4OY1j9vXVl8','Impasto Restobar':'ChIJ0-k_gDvPYpYRWfMc0ON6IYY','Bar Porfirio':'ChIJA1AhzpbPYpYRcVaHKLdHick','Expendio':'ChIJjRgopLjPYpYRkeMQamQdVoo','Kanpai':'ChIJUSL3MIdZYZYRZ13y_Mp7r2c','Vino Bello':'ChIJ_1WtC1FlZJYRA64JWgwDIp4','Bocas del Mar':'ChIJYy3cHilZYZYROGBNDscXgvY'};
 const DN=['','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
@@ -466,7 +494,7 @@ const CARDS=[['C','Visa Gold'],['D','Débito'],['L','Lider Bci']];
 const state={wd:todayWd,cat:'Todo',cards:'CDL',where:'auto'};
 try{const s=JSON.parse(localStorage.getItem('bciPrefs')||'{}'); if(typeof s.cards==='string'&&/^[CDL]{1,3}$/.test(s.cards)) state.cards=s.cards; if(s.cat&&CATS.includes(s.cat)) state.cat=s.cat; if(s.where&&ZONES.some(z=>z[0]===s.where)) state.where=s.where;}catch(e){}
 function save(){try{localStorage.setItem('bciPrefs',JSON.stringify({cards:state.cards,cat:state.cat,where:state.where}))}catch(e){}}
-function activeZone(wd){return state.where==='auto'?(wd<=3?'stgo':'lit'):state.where}
+function activeZone(wd){if(state.where!=='auto') return state.where; if(usingGps(wd)) return gpsZone(); return wd<=3?'stgo':'lit'}
 function num(p){const m=p.match(/\d+/);return m?+m[0]:0}
 function inZone(it,wd){const z=activeZone(wd), iz=zoneOf(it); return z==='all'||iz==='any'||iz===z}
 function applies(it,wd,dateNum,ignoreZone){
@@ -522,7 +550,8 @@ function render(){
   $('notes').innerHTML=MONTH.holidays.includes(dn)?'<span class="note">Feriado: confirma en la App Bci que el beneficio aplique.</span>':'';
   renderBest(wd,dn);
   const catOk=it=>state.cat==='Todo'||it[1]===state.cat;
-  const byPct=(a,b)=>{const sa=a[3].includes(0)?1:0,sb=b[3].includes(0)?1:0; return sa-sb || num(b[2])-num(a[2])};
+  const near=usingGps(wd);
+  const byPct=(a,b)=>{const sa=a[3].includes(0)?1:0,sb=b[3].includes(0)?1:0; return sa-sb || num(b[2])-num(a[2]) || (near?nearBy(a,b):0)};
   const all=DATA.filter(it=>applies(it,wd,dn)&&catOk(it)).sort(byPct);
   const low=all.filter(isLow);
   const items=all.filter(it=>!isLow(it));
@@ -530,7 +559,8 @@ function render(){
   const lowHtml=fold('Restaurantes y cafés al 20%',low,()=>true);
   const others=DATA.filter(it=>applies(it,wd,dn,true)&&!inZone(it,wd)&&catOk(it)).sort(byPct);
   const othersHtml=fold(z==='lit'?'También en Santiago':'También cerca de Matanzas',others,isLow);
-  $('count').textContent=`${ZONE_NAME[z]} · ${items.length} beneficios`;
+  $('count').textContent=`${ZONE_NAME[z]}${near?' · según tu ubicación':''} · ${items.length} beneficios`;
+  renderLoc();
   $('lede').innerHTML=lede(wd,dn,z);
   if(!items.length){$('list').innerHTML='<div class="empty">Nada destacado en esta zona y categoría para este día.</div>'+lowHtml+othersHtml;return}
   const groups={};
@@ -602,6 +632,15 @@ function nameHtml(n,lk){
 }
 
 function lede(wd,dn,z){
+  if(usingGps(wd)){
+    const eat=DATA.filter(it=>applies(it,wd,dn,true)&&(it[1]===R||it[1]===F)&&num(it[2])>=40&&distKm(it)!=null).sort(nearBy);
+    if(eat.length){
+      const close=eat.filter(it=>distKm(it)<5).length, n0=eat[0];
+      if(!close) return `${wd===todayWd?'Hoy':'El '+DN[wd].toLowerCase()} no hay dónde comer al 40% cerca de ti. El más cercano: <b>${n0[0]}</b>, ${fmtKm(distKm(n0))}.`;
+      const strength=close>=4?'es un día fuerte':'es un día normal';
+      return `${wd===todayWd?'Hoy':'El '+DN[wd].toLowerCase()} ${strength}: <b>${close}</b> ${close===1?'lugar':'lugares'} para comer al 40% o más a menos de 5 km. El más cercano: <b>${n0[0]}</b>, ${fmtKm(distKm(n0))}.`;
+    }
+  }
   const day=DATA.filter(it=>!it[3].includes(0)&&applies(it,wd,dn)&&!isLow(it));
   const rest=day.filter(it=>(it[1]===R||it[1]===F)&&num(it[2])>=40).length;
   const top=[...day].sort((a,b)=>num(b[2])-num(a[2]))[0];
@@ -709,7 +748,8 @@ function hoursHtml(n,wd){const h=hoursInfo(n,wd);return h?(h.warn?`<span class="
 const NICHE=new Set(['Cpech','Filadd','Padre Mariano','Clínica Everest','Clínica Norden','Kidzania','Smart Fit','RedSalud','Otros comercios','Lider en 3 cuotas']);
 function renderBest(wd,dn){
   const pool=DATA.filter(it=>applies(it,wd,dn)&&!isLow(it)&&it[2].includes('%')&&!NICHE.has(it[0]));
-  pool.sort((a,b)=>{const sa=a[3].includes(0)?1:0,sb=b[3].includes(0)?1:0; return sa-sb||num(b[2])-num(a[2])||(b[1]===R)-(a[1]===R)});
+  const near=usingGps(wd);
+  pool.sort((a,b)=>{const sa=a[3].includes(0)?1:0,sb=b[3].includes(0)?1:0; return sa-sb||num(b[2])-num(a[2])||(near?nearBy(a,b):0)||(b[1]===R)-(a[1]===R)});
   const seen=new Set(), picks=[], daily=[];
   for(const it of pool){
     if(seen.has(it[0])) continue; seen.add(it[0]);
@@ -724,7 +764,8 @@ function renderBest(wd,dn){
     const sub=c===R||c===F?loc:(note||loc);
     const hrs=hoursHtml(n,wd);
     const lk=linkOf(it);
-    return `<div class="row${lk&&!lk.activar?' tap':''}">${wedge(p,num(p)>=40)}<div class="pct${num(p)>=40?' hi':''}">${p}</div><div class="info"><div class="name">${nameHtml(n,lk)}</div><div class="meta">${[sub,payWith(k)].join(' · ')}</div>${hrs?`<div class="meta">${hrs}</div>`:''}</div>${lk&&lk.activar?lk.html:''}</div>`;
+    const dk=near?distKm(it):null;
+    return `<div class="row${lk&&!lk.activar?' tap':''}">${wedge(p,num(p)>=40)}<div class="pct${num(p)>=40?' hi':''}">${p}</div><div class="info"><div class="name">${nameHtml(n,lk)}</div><div class="meta">${[dk!=null?`<span class="dist">${fmtKm(dk)}</span>`:'',sub,payWith(k)].filter(Boolean).join(' · ')}</div>${hrs?`<div class="meta">${hrs}</div>`:''}</div>${lk&&lk.activar?lk.html:''}</div>`;
   }).join('')+dailyHtml;
 }
 function li(it,compact){
@@ -738,7 +779,8 @@ function li(it,compact){
   }
   const hi=num(p)>=40&&p.includes('%');
   const line1=payWith(k);
-  const line2=[loc,multi].filter(Boolean).join(' · ');
+  const dk=usingGps(wd)?distKm(it):null;
+  const line2=[dk!=null?`<span class="dist">${fmtKm(dk)}</span>`:'',loc,multi].filter(Boolean).join(' · ');
   const hrs=(c===R||c===F)?hoursHtml(n,wd):'';
   const noteHtml=note?(/activa|solo del/i.test(note)?`<span class="caveat">${note}</span>`:note):'';
   const lk=linkOf(it);
@@ -768,7 +810,7 @@ $('srcHol').textContent=MONTH.holidays.length?' ('+MONTH.holidays.join(' y ')+')
 render();
 
 // Auto-actualización de la app instalada (solo en vicentee.github.io): si hay una versión nueva publicada, recarga.
-const BUILD='20261016203100';
+const BUILD='20261016210000';
 function checkUpdate(){
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(h=>{
@@ -822,6 +864,8 @@ function parseQuery(q){
   if(/matanzas|pichilemu|playa|costa|santa cruz|colchagua|navidad/.test(t)) out.zone='lit';
   else if(/santiago|providencia|las condes|vitacura|barnechea|nunoa|bellavista|lastarria/.test(t)) out.zone='stgo';
   const l=t.match(/(\d{2,3})\s*(l\b|lt|litro)/); if(l) out.liters=+l[1];
+  out.near=/cerca|cercano|cercana|aqui|aca|al lado|alrededor/.test(t);
+  if(out.near&&!out.days) out.days=[todayWd];
   return out;
 }
 function fuelValue(it,liters){
@@ -869,7 +913,9 @@ function answer(q,over){
   }
   const isFuel=Q.cats&&Q.cats.includes(B)&&!Q.names||list.every(x=>x.it[1]===B);
   const score=x=>isFuel?fuelValue(x.it,Q.liters):(x.it[2].endsWith('%')?num(x.it[2]):0)+(x.every?0:0.5)-(isLow(x.it)?100:0);
-  list.sort((a,b)=>score(b)-score(a)||(a.dn-b.dn));
+  const nearQ=Q.near&&LOC;
+  if(nearQ) list.sort((a,b)=>(distKm(a.it)??1e9)-(distKm(b.it)??1e9)||score(b)-score(a));
+  else list.sort((a,b)=>score(b)-score(a)||(a.dn-b.dn)||(LOC?nearBy(a.it,b.it):0));
   const top=list.slice(0,3);
   const line=(x,i)=>{
     const [n,c,p,,k,tope,loc,note]=x.it;
@@ -878,7 +924,8 @@ function answer(q,over){
     const val=p.includes('/L')?`$${num(p)} por litro`:/^\d+%$/.test(p)?`${p} de ${cash?'cashback':'descuento'}`:p;
     const sv=saving(p,tope,cash);
     const cap=sv&&sv.max?`, hasta ${sv.max}`:(p.includes('/L')&&/\d/.test(tope||'')?`, hasta ${tope} por carga`:'');
-    const where=c===R?` (${loc})`:'';
+    const dk=x.wd===todayWd&&LOC?distKm(x.it):null;
+    const where=c===R?` (${dk!=null?fmtKm(dk):loc})`:'';
     const hrs=(c===R||c===F)&&x.wd===todayWd?hoursInfo(n,x.wd):null;
     const extra=[
       isFuel?`Con ${Q.liters} litros ahorras cerca de ${clp(fuelValue(x.it,Q.liters))}.`:'',
@@ -1083,6 +1130,44 @@ $('q').addEventListener('keydown',e=>{
   if(e.key==='Escape') clearSearch();
 });
 $('qx').onclick=()=>{clearSearch();$('q').focus()};
+// Permiso y lectura de ubicación
+function geoFlag(v){try{if(v===undefined)return localStorage.getItem('bciGeo');localStorage.setItem('bciGeo',v)}catch(e){return null}}
+function renderLoc(){
+  const el=$('loc'); if(!el) return;
+  if(state.where!=='auto'||state.wd!==todayWd){el.hidden=true;return}
+  el.hidden=false;
+  if(LOC_STATUS==='ok'){el.innerHTML='';el.hidden=true;return}
+  if(LOC_STATUS==='asking'){el.innerHTML='<span>Buscando tu ubicación…</span>';return}
+  if(LOC_STATUS==='denied'){el.innerHTML='<span>Sin permiso de ubicación · usando tu semana habitual</span>';return}
+  if(LOC_STATUS==='error'){el.innerHTML='<span>Sin ubicación · usando tu semana habitual</span><button type="button" id="locGo">Reintentar</button>';$('locGo').onclick=()=>locate(true);return}
+  if(!('geolocation' in navigator)){el.hidden=true;return}
+  el.innerHTML='<span>Usando tu semana habitual</span><button type="button" id="locGo">Usar mi ubicación →</button>';
+  $('locGo').onclick=()=>locate(true);
+}
+function locate(user){
+  if(!('geolocation' in navigator)) return;
+  if(user||!LOC){LOC_STATUS=LOC?'ok':'asking';renderLoc()}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    LOC={lat:pos.coords.latitude,lng:pos.coords.longitude,acc:pos.coords.accuracy,t:Date.now()};
+    LOC_STATUS='ok';geoFlag('1');render();
+  },err=>{
+    if(err.code===1){LOC_STATUS='denied';geoFlag('0')} else if(!LOC){LOC_STATUS='error'}
+    render();
+  },{enableHighAccuracy:false,timeout:12000,maximumAge:300000});
+}
+(function initGeo(){
+  if(!('geolocation' in navigator)) return;
+  const go=()=>locate(false);
+  if(navigator.permissions&&navigator.permissions.query){
+    navigator.permissions.query({name:'geolocation'}).then(p=>{
+      if(p.state==='granted'||(p.state==='prompt'&&geoFlag()==='1')) go();
+      else if(p.state==='denied'){LOC_STATUS='denied';renderLoc()}
+    }).catch(()=>{if(geoFlag()==='1')go()});
+  } else if(geoFlag()==='1') go();
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&geoFlag()==='1')go()});
+  setInterval(()=>{if(document.visibilityState==='visible'&&LOC)go()},300000);
+})();
+
 
 
 
