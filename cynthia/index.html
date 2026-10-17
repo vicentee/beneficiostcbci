@@ -776,7 +776,7 @@ $('srcHol').textContent=MONTH.holidays.length?' ('+MONTH.holidays.join(' y ')+')
 render();
 
 // Auto-actualización de la app instalada (solo en vicentee.github.io): si hay una versión nueva publicada, recarga.
-const BUILD='20261016214000';
+const BUILD='20261016214500';
 function checkUpdate(){
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(h=>{
@@ -1127,10 +1127,11 @@ function locate(user){
   const go=()=>locate(false);
   if(navigator.permissions&&navigator.permissions.query){
     navigator.permissions.query({name:'geolocation'}).then(p=>{
-      if(p.state==='granted'||(p.state==='prompt'&&geoFlag()==='1')) go();
+      // Pide la ubicación al abrir, salvo que ella ya la haya rechazado en esta página
+      if(p.state==='granted'||(p.state==='prompt'&&geoFlag()!=='0')) go();
       else if(p.state==='denied'){LOC_STATUS='denied';renderLoc()}
-    }).catch(()=>{if(geoFlag()==='1')go()});
-  } else if(geoFlag()==='1') go();
+    }).catch(()=>{if(geoFlag()!=='0')go()});
+  } else if(geoFlag()!=='0') go();
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&geoFlag()==='1')go()});
   setInterval(()=>{if(document.visibilityState==='visible'&&LOC)go()},300000);
 })();
